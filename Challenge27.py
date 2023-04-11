@@ -14,6 +14,7 @@ def main():
     #From the nightmare list, pull the strings eyes, goggles, and nothing and create a print function that returns this output:
     #My eyes! The goggles do nothing!
     print("My " + nightmare[0]['user']['name']['first'] + "! The " + nightmare[0]['kumquat'] + " do " + nightmare[0]["d"] + "!")
+    
 
 if __name__ == '__main__':
     main()
