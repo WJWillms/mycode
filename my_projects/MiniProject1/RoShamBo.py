@@ -8,20 +8,8 @@ import random
 
 def greeter():
     clearscreen()
-    message = "Welcome to Rock Paper Scissors. The objective of the game is to beat your opponent by choosing the card that will beat your opponents.\n"
-    message2 = "Rock beats Scissors, Scissors beats Paper, and Paper beats Rock.\n" 
-    message3 = "You have 5 of each card. You win by beating your opponent 3 times, you lose if your opponent wins 3 times, and draw if you run out of cards.\n"
-    message4 = "Press any button to begin!"
+    message = "Welcome to Rock Paper Scissors. The objective of the game is to beat your opponent by choosing the card that will beat your opponents.\nRock beats Scissors, Scissors beats Paper, and Paper beats Rock.\nYou have 5 of each card.You win by beating your opponent 3 times, you lose if your opponent wins 3 times, and draw if you run out of cards.\nPress any button to begin!"
     for char in message:
-        print(char, end='', flush=True)
-        time.sleep(0.04)
-    for char in message2:
-        print(char, end='', flush=True)
-        time.sleep(0.04)
-    for char in message3:
-        print(char, end='', flush=True)
-        time.sleep(0.04)
-    for char in message4:
         print(char, end='', flush=True)
         time.sleep(0.04)
     keypress()
