@@ -184,7 +184,7 @@ def HardModeActivation():
 def main():
     #Numbers in list coordinate to Rock, Paper, Scissors(Respectively) and the amount of that card that is left
     
-    greeter()
+    #greeter()
     again = True
     while again == True:
         user_Cards = [5,5,5]
@@ -215,13 +215,13 @@ def main():
             clearscreen()
             if user_Lives == 0:
                 gameContinue = False
-                x = input("The CPU won " + str(CPU_Lives) + " to " + str(user_Lives) +". Enter 1 to play again or anything else to quit: ")
+                x = input("The CPU won 3 to " + str(3 - CPU_Lives) +". Enter 1 to play again or anything else to quit: ")
                 if x != '1':
                     again = False
                 clearscreen()
             elif CPU_Lives == 0:
                 gameContinue = False
-                x = input("You won " + str(user_Lives) + " to " + str(CPU_Lives) +". Enter 1 to play again or anything else to quit: ")
+                x = input("You won 3 to " + str(3 - user_Lives) +". Enter 1 to play again or anything else to quit: ")
                 if x != '1':
                     again = False
                 clearscreen()
