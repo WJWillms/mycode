@@ -170,7 +170,7 @@ def LifeUpdate(user,CPU,cards):
 def HardModeActivation():
     x=""
     while x != '1' and x != '2':
-        print("The game has a small dificulty modifier. Choose which way to play")
+        print("The game has a small difficulty modifier. Choose which way to play")
         print("1. Show amount of CPU cards left")
         print("2. Don't show amount of CPU cards left")
         x = input("Mode: ")
