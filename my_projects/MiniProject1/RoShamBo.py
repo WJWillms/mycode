@@ -184,7 +184,7 @@ def HardModeActivation():
 def main():
     #Numbers in list coordinate to Rock, Paper, Scissors(Respectively) and the amount of that card that is left
     
-    #greeter()
+    greeter()
     again = True
     while again == True:
         user_Cards = [5,5,5]
