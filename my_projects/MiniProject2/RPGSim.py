@@ -34,18 +34,39 @@ def main():
     rooms = {
 
         'Hall' : {
-            'south' : 'Kitchen',
-            'east'  : 'Dining Room',
-            'item'  : 'key'
+            
+            'east'   : 'The Den',
+            'north'  : 'Living Room'
         },
 
-        'Kitchen' : {
-            'north' : 'Hall',
-            'item'  : 'monster',
+        'The Den' : {
+            'north'    : 'Master Bedroom',
+            'west'     : 'Hall',
+            'monster'  : 'Werewolf',
                     },
-        'Dining Room' : {
-            'west' : 'Hall'
-                         }
+
+        'Master Bedroom' : {
+            'west' : 'Living Room',
+            'south': 'The Den',
+            'item' : 'Key'             },
+
+        'Living Room' : {
+            'west' : 'Living Room',
+            'south': 'The Den',
+            'item' : 'Key'             },
+
+        'Kitchen' : {
+            'west' : 'Living Room',
+            'south': 'The Den',
+            'item' : 'Key'             },
+
+        'Cellar' : {
+            'west' : 'Living Room',
+            'south': 'The Den',
+            'item' : 'Key'             }
+
+
+
           }
 
     # start the player in the Hall
