@@ -1,0 +1,46 @@
+Position in Database
+Name
+HP
+Attack
+SpAttack
+Defense
+SpDefense
+Speed
+Type 1
+Type 2
+Move 1
+Move 1 Description
+Move 1 Type
+Move 1 Category
+Move 1 Power
+Move 1 Accuracy
+Move 1 Priority
+Move 1 PP
+Move 1 Special Trait
+Move 2
+Move 2 Description
+Move 2 Type
+Move 2 Category
+Move 2 Power
+Move 2 Accuracy
+Move 2 Priority
+Move 2 PP
+Move 2 Special Trait
+Move 3
+Move 3 Description
+Move 3 Type
+Move 3 Category
+Move 3 Power
+Move 3 Accuracy
+Move 3 Priority
+Move 3 PP
+Move 3 Special Trait
+Move 4
+Move 4 Description
+Move 4 Type
+Move 4 Category
+Move 4 Power
+Move 4 Accuracy
+Move 4 Priority
+Move 4 PP
+Move 4 Special Trait
