@@ -5,6 +5,7 @@ import os
 import time
 import curses
 import textwrap
+import copy
 
 #Types assigned to a number value for computing
 # 1=Grass, 2=Fire, 3=Water, 4=Flying, 5=Electric, 6=Poison, 7=Bug, 8=Normal, 9=Ground, 10=Fairy,11=Dark 12=Fighting, 13=Psychic, 14=Rock,
@@ -32,6 +33,8 @@ import textwrap
 #Dragon(18)                 Dragon(18)                               Dragon(18), Fairy(10), Ice(16)
 
 #Move Categories 1 = Physical, 2 = Special, 3 = Non-Damaging
+
+#Poison Calc: damage = floor((maxHP * turn) / 16)
 
 """Future Key Press
 import msvcrt
@@ -103,12 +106,6 @@ _.----.        ____         ,'  _\___    ___    ____
     # Restore cursor visibility
     curses.curs_set(1)
 
-
-    
-
-
-    
-
 def clearscreen():
     print("\033c")
 
@@ -148,6 +145,7 @@ def StatDB(num):
     configfile.close()
     return party_Pokemon
 
+#Ascii's courtesy of https://www.fiikus.net/?pokedex
 def asciiRead(player,cpu):
     asciiDB = ["VenusaurAscii.txt"]
     cpuAsciiDB = ["VenusaurAsciiCpu.txt"]
@@ -164,32 +162,40 @@ def AtkBaseDamage(attacker, defender, move):
     if move == 1:
         if attacker[13] == 1:
             baseDamage = (((2 * 100 / 5 + 2) * attacker[14] * attacker[3] / defender[5]) /50 + 2)
+            return baseDamage
         elif attacker[13] == 2:
             baseDamage = (((2 * 100 / 5 + 2) * attacker[14] * attacker[4] / defender[6]) /50 + 2)
+            return baseDamage
         else:
             print("Run non damaging attack")
     if move == 2:
         if attacker[22] == 1:
             baseDamage = (((2 * 100 / 5 + 2) * attacker[23] * attacker[3] / defender[5]) /50 + 2)
+            return baseDamage
         elif attacker[22] == 2:
             baseDamage = (((2 * 100 / 5 + 2) * attacker[23] * attacker[4] / defender[6]) /50 + 2)
+            return baseDamage
         else:
             print("Run non damaging attack")
     if move == 3:
         if attacker[31] == 1:
             baseDamage = (((2 * 100 / 5 + 2) * attacker[32] * attacker[3] / defender[5]) /50 + 2)
+            return baseDamage
         elif attacker[31] == 2:
             baseDamage = (((2 * 100 / 5 + 2) * attacker[32] * attacker[4] / defender[6]) /50 + 2)
+            return baseDamage
         else:
             print("Run non damaging attack")
     if move == 4:
         if attacker[40] == 1:
             baseDamage = (((2 * 100 / 5 + 2) * attacker[41] * attacker[3] / defender[5]) /50 + 2)
+            return baseDamage
         elif attacker[40] == 2:
             baseDamage = (((2 * 100 / 5 + 2) * attacker[41] * attacker[4] / defender[6]) /50 + 2)
+            return baseDamage
         else:
             print("Run non damaging attack")
-    return baseDamage
+    
 
 def typeCalc(atkType, defTypeOne, defTypeTwo):
     modifier = 1.0
@@ -515,16 +521,17 @@ def stabBonus(moveType, typeOne, typeTwo):
     return modifier
     
 def statsDisplay(player, cpu):
-    print(player[1], end="")
-    for char in range(71-len(player[1])):
+    
+    for i in range(player[46]-len(player[1])):
           print(" ", end="")
+    print(player[1], end="")      
     print("|                  |", end="")
-    for char in range(79 - len(player[1]) - len(cpu[1])):
-          print(" ", end="")
     print(cpu[1])
 
 def hpDisplay(player, playerAdj, cpu, cpuAdj):
-    print(str(playerAdj[2]) + "/" + str(player[2]) + "                                                                                                                                  " + str(cpuAdj[2]) + "/" + str(cpu[2]))
+    for i in range(player[46]-len(str(player[2])) - len(str(playerAdj[2])) - 1):
+          print(" ", end="")
+    print(str(playerAdj[2]) + "/" + str(player[2]) + "|                  |" + str(cpuAdj[2]) + "/" + str(cpu[2]))
 
 def moveDisplay(pokemon):
     #firstSpace and the following if else is for output blank spacing formmating
@@ -713,30 +720,877 @@ def modifier(move, attacker, defender):
 def randomizedDamage():
     return random.randint(85,100) / 100
 
-def fullDamageCalc(attacker, defender, move):
+def fullDamageCalc(attacker, defender, move, attackerOrig, DefenderOrig):
     damage = AtkBaseDamage(attacker, defender, move) * modifier(move, attacker, defender) * randomizedDamage()
     return damage
+
+
+def userSpecialAbilities(move, userPokemon, effect):
+    global userFieldBinaries
+    global cpuFieldBinaries
+    global weatherBinaries
+    global userPokemonOneBinaries
+    global cpuPokemonOneBinaries
+
+    global userPokemonOne
+    global cpuPokemonOne
+    global userPokemonOneAdj
+    global cpuPokemonOneAdj
+    afterEffect = effect
+
+    #0 No effect
+    #1 Leech Seed
+    #2 Sludge Bomb or 30% poison chance
+    #3 Synthesis
+    #4 Hidden Power damage modifier
+
+    if move == 1:
+        if userPokemon[18] == 0:
+            return
+        elif userPokemon[18] == 1:
+            if afterEffect == True:
+                return
+            else:
+                if cpuPokemonOneBinaries[7] == False:
+                    cpuPokemonOneBinaries[0] = True
+                    cpuPokemonOneBinaries[7] = True
+                    print("The opposing " + cpuPokemonOne[1] + " was seeded.")
+                else:
+                    print("The opposing " + cpuPokemonOne[1] + " was already seeded.")
+        elif userPokemon[18] == 2:
+            if afterEffect == True:
+                return
+            else:
+                num = random.randint(1,100)
+                if num > 69:
+                    if cpuPokemonOneBinaries[2] == False:
+                        print("The opposing " + cpuPokemonOne[1] + " was poisoned.")
+                        cpuPokemonOneBinaries[2] = True
+                    
+        elif userPokemon[18] == 3:
+            if afterEffect == True:
+                return
+            else:
+                if weatherBinaries[1] == True:
+                    userPokemonOneAdj[2] = userPokemonOneAdj[2] + (userPokemonOne[2] * (2/3))
+                elif weatherBinaries[2] == True:
+                    userPokemonOneAdj[2] = userPokemonOneAdj[2] + (userPokemonOne[2] * (1/4))
+                else:
+                    userPokemonOneAdj[2] = userPokemonOneAdj[2] + (userPokemonOne[2] * (1/2))
+                print("Your " + userPokemon[1] + " was healed.")
+                if userPokemonOneAdj[2] > userPokemonOne[2]:
+                    userPokemonOneAdj[2] = userPokemonOne[2]
+        elif userPokemon[18] == 4:
+            num = random.randint(30,70)
+            userPokemonOneAdj[14] = num
+
+
+
+
+    elif move == 2:
+        if userPokemon[27] == 0:
+            return
+        elif userPokemon[27] == 1:
+            if afterEffect == True:
+                return
+            else:
+                if cpuPokemonOneBinaries[7] == False:
+                    cpuPokemonOneBinaries[0] = True
+                    cpuPokemonOneBinaries[7] = True
+                    print("The opposing " + cpuPokemonOne[1] + " was seeded.")
+                else:
+                    print("The opposing " + cpuPokemonOne[1] + " was already seeded.")
+        elif userPokemon[27] == 2:
+            if afterEffect == True:
+                return
+            else:
+                num = random.randint(1,100)
+                if num > 69:
+                    if cpuPokemonOneBinaries[2] == False:
+                        print("The opposing " + cpuPokemonOne[1] + " was poisoned.")
+                        cpuPokemonOneBinaries[2] = True
+        elif userPokemon[27] == 3:
+            if afterEffect == True:
+                return
+            else:
+                if weatherBinaries[1] == True:
+                    userPokemonOneAdj[2] = userPokemonOneAdj[2] + (userPokemonOne[2] * (2/3))
+                elif weatherBinaries[2] == True:
+                    userPokemonOneAdj[2] = userPokemonOneAdj[2] + (userPokemonOne[2] * (1/4))
+                else:
+                    userPokemonOneAdj[2] = userPokemonOneAdj[2] + (userPokemonOne[2] * (1/2))
+                print("Your " + userPokemon[1] + " was healed.")
+                if userPokemonOneAdj[2] > userPokemonOne[2]:
+                    userPokemonOneAdj[2] = userPokemonOne[2]
+        elif userPokemon[27] == 4:
+            num = random.randint(30,70)
+            userPokemonOneAdj[23] = num
+
+
+
+    elif move == 3:
+        if userPokemon[36] == 0:
+            return
+        elif userPokemon[36] == 1:
+            if afterEffect == True:
+                return
+            else:
+                if cpuPokemonOneBinaries[7] == False:
+                    cpuPokemonOneBinaries[0] = True
+                    cpuPokemonOneBinaries[7] = True
+                    print("The opposing " + cpuPokemonOne[1] + " was seeded.")
+                else:
+                    print("The opposing " + cpuPokemonOne[1] + " was already seeded.")
+        elif userPokemon[36] == 2:
+            if afterEffect == True:
+                return
+            else:
+                num = random.randint(1,100)
+                if num > 69:
+                    if cpuPokemonOneBinaries[2] == False:
+                        print("The opposing " + cpuPokemonOne[1] + " was poisoned.")
+                        cpuPokemonOneBinaries[2] = True
+        elif userPokemon[36] == 3:
+            if afterEffect == True:
+                return
+            else:
+                if weatherBinaries[1] == True:
+                    userPokemonOneAdj[2] = userPokemonOneAdj[2] + (userPokemonOne[2] * (2/3))
+                elif weatherBinaries[2] == True:
+                    userPokemonOneAdj[2] = userPokemonOneAdj[2] + (userPokemonOne[2] * (1/4))
+                else:
+                    userPokemonOneAdj[2] = userPokemonOneAdj[2] + (userPokemonOne[2] * (1/2))
+                print("Your " + userPokemon[1] + " was healed.")
+                if userPokemonOneAdj[2] > userPokemonOne[2]:
+                    userPokemonOneAdj[2] = userPokemonOne[2]
+        elif userPokemon[36] == 4:
+            num = random.randint(30,70)
+            userPokemonOneAdj[32] = num
+
+
+
+
+    elif move == 4:
+        if userPokemon[45] == 0:
+            return
+        elif userPokemon[45] == 1:
+            if afterEffect == True:
+                return
+            else:
+                if cpuPokemonOneBinaries[7] == False:
+                    cpuPokemonOneBinaries[0] = True
+                    cpuPokemonOneBinaries[7] = True
+                    print("The opposing " + cpuPokemonOne[1] + " was seeded.")
+                else:
+                    print("The opposing " + cpuPokemonOne[1] + " was already seeded.")
+        elif userPokemon[45] == 2:
+            if afterEffect == True:
+                return
+            else:
+                num = random.randint(1,100)
+                if num > 69:
+                    if cpuPokemonOneBinaries[2] == False:
+                        print("The opposing " + cpuPokemonOne[1] + " was poisoned.")
+                        cpuPokemonOneBinaries[2] = True
+        elif userPokemon[45] == 3:
+            if afterEffect == True:
+                return
+            else:
+                if weatherBinaries[1] == True:
+                    userPokemonOneAdj[2] = userPokemonOneAdj[2] + (userPokemonOne[2] * (2/3))
+                elif weatherBinaries[2] == True:
+                    userPokemonOneAdj[2] = userPokemonOneAdj[2] + (userPokemonOne[2] * (1/4))
+                else:
+                    userPokemonOneAdj[2] = userPokemonOneAdj[2] + (userPokemonOne[2] * (1/2))
+                print("Your " + userPokemon[1] + " was healed.")
+                if userPokemonOneAdj[2] > userPokemonOne[2]:
+                    userPokemonOneAdj[2] = userPokemonOne[2]
+        elif userPokemon[45] == 4:
+            num = random.randint(30,70)
+            userPokemonOneAdj[41] = num
+
+
+
+
+def cpuSpecialAbilities(move, cpuPokemon, effect):
+    global userFieldBinaries
+    global cpuFieldBinaries
+    global weatherBinaries
+    global userPokemonOneBinaries
+    global cpuPokemonOneBinaries
+
+    global userPokemonOne
+    global cpuPokemonOne
+    global userPokemonOneAdj
+    global cpuPokemonOneAdj
+    afterEffect = effect
+
+    #0 No effect
+    #1 Leech Seed
+    #2 Sludge Bomb or 30% poison chance
+    #3 Synthesis
+    #4 Hidden Power damage modifier
+
+    if move == 1:
+        if cpuPokemon[18] == 0:
+            return
+        elif cpuPokemon[18] == 1:
+            if afterEffect == True:
+                return
+            else:
+                if userPokemonOneBinaries[7] == False:
+                    userPokemonOneBinaries[0] = True
+                    userPokemonOneBinaries[7] = True
+                    print("your " + userPokemonOne[1] + " was seeded.")
+                else:
+                    print("your " + userPokemonOne[1] + " was already seeded.")
+        elif cpuPokemon[18] == 2:
+            if afterEffect == True:
+                return
+            else:
+                num = random.randint(1,100)
+                if num > 69:
+                    if userPokemonOneBinaries[2] == False:
+                        print("The opposing " + userPokemonOne[1] + " was poisoned.")
+                        userPokemonOneBinaries[2] = True
+                    
+        elif cpuPokemon[18] == 3:
+            if afterEffect == True:
+                return
+            else:
+                if weatherBinaries[1] == True:
+                    cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] + (cpuPokemonOne[2] * (2/3))
+                elif weatherBinaries[2] == True:
+                    cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] + (cpuPokemonOne[2] * (1/4))
+                else:
+                    cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] + (cpuPokemonOne[2] * (1/2))
+                print("The opposing " + cpuPokemon[1] + " was healed.")
+                if cpuPokemonOneAdj[2] > cpuPokemonOne[2]:
+                    cpuPokemonOneAdj[2] = cpuPokemonOne[2]
+        elif cpuPokemon[18] == 4:
+            num = random.randint(30,70)
+            cpuPokemonOneAdj[14] = num
+
+
+    elif move == 2:
+        if cpuPokemon[27] == 0:
+            return
+        elif cpuPokemon[27] == 1:
+            if afterEffect == True:
+                return
+            else:
+                if userPokemonOneBinaries[7] == False:
+                    userPokemonOneBinaries[0] = True
+                    userPokemonOneBinaries[7] = True
+                    print("Your " + userPokemonOne[1] + " was seeded.")
+                else:
+                    print("Your " + userPokemonOne[1] + " was already seeded.")
+        elif cpuPokemon[27] == 2:
+            if afterEffect == True:
+                return
+            else:
+                num = random.randint(1,100)
+                if num > 69:
+                    if userPokemonOneBinaries[2] == False:
+                        print("Your " + userPokemonOne[1] + " was poisoned.")
+                        userPokemonOneBinaries[2] = True
+        elif cpuPokemon[27] == 3:
+            if afterEffect == True:
+                return
+            else:
+                if weatherBinaries[1] == True:
+                    cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] + (cpuPokemonOne[2] * (2/3))
+                elif weatherBinaries[2] == True:
+                    cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] + (cpuPokemonOne[2] * (1/4))
+                else:
+                    cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] + (cpuPokemonOne[2] * (1/2))
+                print("The opposing " + cpuPokemon[1] + " was healed.")
+                if cpuPokemonOneAdj[2] > cpuPokemonOne[2]:
+                    cpuPokemonOneAdj[2] = cpuPokemonOne[2]
+        elif cpuPokemon[27] == 4:
+            num = random.randint(30,70)
+            cpuPokemonOneAdj[23] = num
+
+
+    elif move == 3:
+        if cpuPokemon[36] == 0:
+            return
+        elif cpuPokemon[36] == 1:
+            if afterEffect == True:
+                return
+            else:
+                if userPokemonOneBinaries[7] == False:
+                    userPokemonOneBinaries[0] = True
+                    userPokemonOneBinaries[7] = True
+                    print("Your " + userPokemonOne[1] + " was seeded.")
+                else:
+                    print("Your " + userPokemonOne[1] + " was already seeded.")
+        elif cpuPokemon[36] == 2:
+            if afterEffect == True:
+                return
+            else:
+                num = random.randint(1,100)
+                if num > 69:
+                    if userPokemonOneBinaries[2] == False:
+                        print("Your " + userPokemonOne[1] + " was poisoned.")
+                        userPokemonOneBinaries[2] = True
+        elif cpuPokemon[36] == 3:
+            if afterEffect == True:
+                return
+            else:
+                if weatherBinaries[1] == True:
+                    cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] + (cpuPokemonOne[2] * (2/3))
+                elif weatherBinaries[2] == True:
+                    cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] + (cpuPokemonOne[2] * (1/4))
+                else:
+                    cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] + (cpuPokemonOne[2] * (1/2))
+                print("The opposing " + cpuPokemon[1] + " was healed.")
+                if cpuPokemonOneAdj[2] > cpuPokemonOne[2]:
+                    cpuPokemonOneAdj[2] = cpuPokemonOne[2]
+        elif cpuPokemon[36] == 4:
+            num = random.randint(30,70)
+            cpuPokemonOneAdj[32] = num
+
+
+    elif move == 4:
+        if cpuPokemon[45] == 0:
+            return
+        elif cpuPokemon[45] == 1:
+            if afterEffect == True:
+                return
+            else:
+                if userPokemonOneBinaries[7] == False:
+                    userPokemonOneBinaries[0] = True
+                    userPokemonOneBinaries[7] = True
+                    print("Your " + userPokemonOne[1] + " was seeded.")
+                else:
+                    print("Your " + userPokemonOne[1] + " was already seeded.")
+        elif cpuPokemon[45] == 2:
+            if afterEffect == True:
+                return
+            else:
+                num = random.randint(1,100)
+                if num > 69:
+                    if userPokemonOneBinaries[2] == False:
+                        print("Your " + userPokemonOne[1] + " was poisoned.")
+                        userPokemonOneBinaries[2] = True
+        elif cpuPokemon[45] == 3:
+            if afterEffect == True:
+                return
+            else:
+                if weatherBinaries[1] == True:
+                    cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] + (cpuPokemonOne[2] * (2/3))
+                elif weatherBinaries[2] == True:
+                    cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] + (cpuPokemonOne[2] * (1/4))
+                else:
+                    cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] + (cpuPokemonOne[2] * (1/2))
+                print("The opposing " + cpuPokemon[1] + " was healed.")
+                if cpuPokemonOneAdj[2] > cpuPokemonOne[2]:
+                    cpuPokemonOneAdj[2] = cpuPokemonOne[2]
+        elif cpuPokemon[45] == 4:
+            num = random.randint(30,70)
+            cpuPokemonOneAdj[41] = num
+
+
+def speedCalc(user, userAdj, cpu, cpuAdj):
+    if userAdj > cpuAdj:
+        return 1
+    elif cpuAdj > userAdj:
+        return 2
+    elif cpuAdj == userAdj:
+        return random.randint(1, 2)
+
+def accuracyCalc(attacker, attackerAdj, defender, defenderAdj, move):
+    hit = False
+    if move == 1:
+        num = random.randint(1,100)
+        if num > attackerAdj[15]:
+            hit = False
+        else:
+            hit = True
+    elif move == 2:
+        num = random.randint(1,100)
+        if num > attackerAdj[24]:
+            hit = False
+        else:
+            hit = True
+    elif move == 3:
+        num = random.randint(1,100)
+        if num > attackerAdj[33]:
+            hit = False
+        else:
+            hit = True
+    elif move == 4:
+        num = random.randint(1,100)
+        if num > attackerAdj[42]:
+            hit = False
+        else:
+            hit = True
+    return hit
+
+def moveEffectivenessPrint(attacker, defender, move):
+    if move == 1:
+        effectiveOut = typeCalc(attacker[12], defender[8], defender[9])
+        if effectiveOut > 1:
+            print("It was super effective")
+        elif effectiveOut < 1:
+            print("It wasn't very effective")
+        else:
+            print(attacker[10] + " hit the opposing " + defender[1])
+    elif move == 2:
+        effectiveOut = typeCalc(attacker[21], defender[8], defender[9])
+        if effectiveOut > 1:
+            print("It was super effective")
+        elif effectiveOut < 1:
+            print("It wasn't very effective")
+        else:
+            print(attacker[19] + " hit the opposing " + defender[1])
+    elif move == 3:
+        effectiveOut = typeCalc(attacker[30], defender[8], defender[9])
+        if effectiveOut > 1:
+            print("It was super effective")
+        elif effectiveOut < 1:
+            print("It wasn't very effective")
+        else:
+            print(attacker[28] + " hit the opposing " + defender[1])
+    elif move == 4:
+        effectiveOut = typeCalc(attacker[39], defender[8], defender[9])
+        if effectiveOut > 1:
+            print("It was super effective")
+        elif effectiveOut < 1:
+            print("It wasn't very effective")
+        else:
+            print(attacker[37] + " hit the opposing " + defender[1])
+    
+    
+def cpuMoveChooser():
+    return random.randint(1,4)
+
+
 def main():
     curses.wrapper(greeter)
     clearscreen()
-    
-    print("Choose a pokemon to battle with")
-    print("1. Venusaur")
-    choice = int(input())
 
- 
 
-    party_Pokemon_One = StatDB(choice)
-    party_Pkemon_One_Adj = party_Pokemon_One
-    CPU_Pokemon_One = CPUChoice()
-    CPU_Pokemon_One_Adj = CPU_Pokemon_One
-    asciiRead(party_Pokemon_One[0],CPU_Pokemon_One[0])
-    statsDisplay(party_Pokemon_One, CPU_Pokemon_One)
-    hpDisplay(party_Pokemon_One, party_Pkemon_One_Adj, CPU_Pokemon_One, CPU_Pokemon_One_Adj)
-    moveDisplay(party_Pkemon_One_Adj)
-    moveChoice = moveChoose(party_Pokemon_One, party_Pkemon_One_Adj, CPU_Pokemon_One, CPU_Pokemon_One_Adj)
-    damage = int(fullDamageCalc(party_Pkemon_One_Adj, CPU_Pokemon_One_Adj, moveChoice))
-    print(damage)
+    #Making everything global because I hate my life
+    global userFieldBinaries
+    global cpuFieldBinaries
+    global weatherBinaries
+    global binariesTemplate
+    global userPokemonOneBinaries
+    global cpuPokemonOneBinaries
+    global userPokemonOne
+    global userPokemonOneAdj
+    global cpuPokemonOne
+    global cpuPokemonOneAdj
 
+
+
+
+    #FieldCondition, Spikes, Toxic Spikes, Stealth Rocks
+    userFieldBinaries = [False, False, False, False]
+    cpuFieldBinaries = [False, False, False, False]
+    #Weather Condition, Sunny, Raining
+    weatherBinaries = [False, False, False]
+    #Status Condition, Burn, Poison, Paralyze, Freeze, Sleep, Confusion, Leech Seeded
+    binariesTemplate = [False, False, False, False, False, False ,False, False]
+    userPokemonOneBinaries = binariesTemplate
+    cpuPokemonOneBinaries = binariesTemplate
+
+
+
+    while True:
+        print("Choose a pokemon to battle with")
+        print("1. Venusaur")
+        choice = input("Choice: ")
+        if choice.isdigit() and int(choice) in range(1, 2):
+            choice = int(choice)
+            break
+        else:
+            print("Invalid Choice")
+            time.sleep(1.4)
+            clearscreen()
+    clearscreen()
+    userPokemonOne = StatDB(choice)
+    userPokemonOneAdj = copy.deepcopy(userPokemonOne)
+    cpuPokemonOne = CPUChoice()
+    cpuPokemonOneAdj = copy.deepcopy(cpuPokemonOne)
+
+
+    while userPokemonOneAdj[2] > 0 and cpuPokemonOneAdj[2] > 0:
+        asciiRead(userPokemonOne[0],cpuPokemonOne[0])
+        statsDisplay(userPokemonOne, cpuPokemonOne)
+        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+        moveDisplay(userPokemonOneAdj)
+        moveChoice = moveChoose(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+        cpuMove = cpuMoveChooser()
+        fastest = speedCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+        #Fastest 1 = User, 2 = Cpu
+        if fastest == 1:
+            #User Attack
+            if moveChoice == 1:
+                if userPokemonOneAdj[13] == 1 or userPokemonOneAdj[13] == 2:
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[10] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
+                    if moveAccuracy == True:
+                        damage = int(fullDamageCalc(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice, userPokemonOne, cpuPokemonOne))
+                        cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] - damage
+                        moveEffectivenessPrint(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice)
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False)
+                    else:
+                        print(userPokemonOne[10] + " missed " + cpuPokemonOne[1] +".")
+                        time.sleep(.7)
+                else:
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[10] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
+                    if moveAccuracy == True:
+                        time.sleep(.7)
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False)
+            elif moveChoice == 2:
+                if userPokemonOneAdj[22] == 1 or userPokemonOneAdj[22] == 2:
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[19] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
+                    if moveAccuracy == True:
+                        damage = int(fullDamageCalc(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice, userPokemonOne, cpuPokemonOne))
+                        cpuPokemonOneAdj[2] -=damage
+                        moveEffectivenessPrint(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice)
+                        time.sleep(.7)
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False)
+                    else:
+                        print(userPokemonOne[19] + " missed " + cpuPokemonOne[1] +".")
+                        time.sleep(.7)
+                else:
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[19] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
+                    if moveAccuracy == True:
+                        time.sleep(.7)
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False)
+            elif moveChoice == 3:
+                if userPokemonOneAdj[31] == 1 or userPokemonOneAdj[31] == 2:
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[28] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
+                    if moveAccuracy == True:
+                        damage = int(fullDamageCalc(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice, userPokemonOne, cpuPokemonOne))
+                        cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] - damage
+                        moveEffectivenessPrint(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice)
+                        time.sleep(.7)
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False)
+                    else:
+                        print(userPokemonOne[28] + " missed " + cpuPokemonOne[1] +".")
+                        time.sleep(.7)
+                else:
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[28] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
+                    if moveAccuracy == True:
+                        time.sleep(.7)
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False)
+            elif moveChoice == 4:
+                if userPokemonOneAdj[40] == 1 or userPokemonOneAdj[40] == 2:
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[37] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
+                    if moveAccuracy == True:
+                        damage = int(fullDamageCalc(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice, userPokemonOne, cpuPokemonOne))
+                        cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] - damage
+                        moveEffectivenessPrint(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice)
+                        time.sleep(.7)
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False)
+                    else:
+                        print(userPokemonOne[37] + " missed " + cpuPokemonOne[1] +".")
+                        time.sleep(.7)
+                else:
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[37] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
+                    if moveAccuracy == True:
+                        time.sleep(.7)
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False)
+
+
+            #CPU Attack
+            if cpuMove == 1:
+                if cpuPokemonOneAdj[13] == 1 or cpuPokemonOneAdj[13] == 2:
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[10] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
+                    if moveAccuracy == True:
+                        damage = int(fullDamageCalc(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, cpuPokemonOne, userPokemonOne))
+                        userPokemonOneAdj[2] = userPokemonOneAdj[2] - damage
+                        moveEffectivenessPrint(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove)
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
+                    else:
+                        print(cpuPokemonOne[10] + " missed your " + userPokemonOne[1] +".")
+                        time.sleep(.7)
+                else:
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[10] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
+                    if moveAccuracy == True:
+                        time.sleep(.7)
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
+            elif cpuMove == 2:
+                if cpuPokemonOneAdj[22] == 1 or cpuPokemonOneAdj[22] == 2:
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[19] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
+                    if moveAccuracy == True:
+                        damage = int(fullDamageCalc(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, cpuPokemonOne, userPokemonOne))
+                        userPokemonOneAdj[2] = userPokemonOneAdj[2] - damage
+                        moveEffectivenessPrint(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove)
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
+                    else:
+                        print(cpuPokemonOne[19] + " missed your " + userPokemonOne[1] +".")
+                        time.sleep(.7)
+                else:
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[19] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
+                    if moveAccuracy == True:
+                        time.sleep(.7)
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
+            elif cpuMove == 3:
+                if cpuPokemonOneAdj[31] == 1 or cpuPokemonOneAdj[31] == 2:
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[28] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
+                    if moveAccuracy == True:
+                        damage = int(fullDamageCalc(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, cpuPokemonOne, userPokemonOne))
+                        userPokemonOneAdj[2] = userPokemonOneAdj[2] - damage
+                        moveEffectivenessPrint(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove)
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
+                    else:
+                        print(cpuPokemonOne[28] + " missed your " + userPokemonOne[1] +".")
+                        time.sleep(.7)
+                else:
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[28] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
+                    if moveAccuracy == True:
+                        time.sleep(.7)
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
+            elif cpuMove == 4:
+                if cpuPokemonOneAdj[40] == 1 or cpuPokemonOneAdj[40] == 2:
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[37] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
+                    if moveAccuracy == True:
+                        damage = int(fullDamageCalc(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, cpuPokemonOne, userPokemonOne))
+                        userPokemonOneAdj[2] = userPokemonOneAdj[2] - damage
+                        moveEffectivenessPrint(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove)
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
+                    else:
+                        print(cpuPokemonOne[37] + " missed your " + userPokemonOne[1] +".")
+                        time.sleep(.7)
+                else:
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[37] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
+                    if moveAccuracy == True:
+                        time.sleep(.7)
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
+        else:
+            #CPU Attack
+            if cpuMove == 1:
+                if cpuPokemonOneAdj[13] == 1 or cpuPokemonOneAdj[13] == 2:
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[10] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
+                    if moveAccuracy == True:
+                        damage = int(fullDamageCalc(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, cpuPokemonOne, userPokemonOne))
+                        userPokemonOneAdj[2] = userPokemonOneAdj[2] - damage
+                        moveEffectivenessPrint(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove)
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
+                    else:
+                        print(cpuPokemonOne[10] + " missed your " + userPokemonOne[1] +".")
+                        time.sleep(.7)
+                else:
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[10] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
+                    if moveAccuracy == True:
+                        time.sleep(.7)
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
+            elif cpuMove == 2:
+                if cpuPokemonOneAdj[22] == 1 or cpuPokemonOneAdj[22] == 2:
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[19] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
+                    if moveAccuracy == True:
+                        damage = int(fullDamageCalc(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, cpuPokemonOne, userPokemonOne))
+                        userPokemonOneAdj[2] = userPokemonOneAdj[2] - damage
+                        moveEffectivenessPrint(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove)
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
+                    else:
+                        print(cpuPokemonOne[19] + " missed your " + userPokemonOne[1] +".")
+                        time.sleep(.7)
+                else:
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[19] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
+                    if moveAccuracy == True:
+                        time.sleep(.7)
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
+            elif cpuMove == 3:
+                if cpuPokemonOneAdj[31] == 1 or cpuPokemonOneAdj[31] == 2:
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[28] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
+                    if moveAccuracy == True:
+                        damage = int(fullDamageCalc(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, cpuPokemonOne, userPokemonOne))
+                        userPokemonOneAdj[2] = userPokemonOneAdj[2] - damage
+                        moveEffectivenessPrint(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove)
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
+                    else:
+                        print(cpuPokemonOne[28] + " missed your " + userPokemonOne[1] +".")
+                        time.sleep(.7)
+                else:
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[28] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
+                    if moveAccuracy == True:
+                        time.sleep(.7)
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
+            elif cpuMove == 4:
+                if cpuPokemonOneAdj[40] == 1 or cpuPokemonOneAdj[40] == 2:
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[37] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
+                    if moveAccuracy == True:
+                        damage = int(fullDamageCalc(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, cpuPokemonOne, userPokemonOne))
+                        userPokemonOneAdj[2] = userPokemonOneAdj[2] - damage
+                        moveEffectivenessPrint(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove)
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
+                    else:
+                        print(cpuPokemonOne[37] + " missed your " + userPokemonOne[1] +".")
+                        time.sleep(.7)
+                else:
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[37] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
+                    if moveAccuracy == True:
+                        time.sleep(.7)
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
+            #User Attack
+            if moveChoice == 1:
+                if userPokemonOneAdj[13] == 1 or userPokemonOneAdj[13] == 2:
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[10] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
+                    if moveAccuracy == True:
+                        damage = int(fullDamageCalc(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice, userPokemonOne, cpuPokemonOne))
+                        cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] - damage
+                        moveEffectivenessPrint(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice)
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False)
+                    else:
+                        print(userPokemonOne[10] + " missed " + cpuPokemonOne[1] +".")
+                        time.sleep(.7)
+                else:
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[10] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
+                    if moveAccuracy == True:
+                        time.sleep(.7)
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False)
+            elif moveChoice == 2:
+                if userPokemonOneAdj[22] == 1 or userPokemonOneAdj[22] == 2:
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[19] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
+                    if moveAccuracy == True:
+                        damage = int(fullDamageCalc(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice, userPokemonOne, cpuPokemonOne))
+                        cpuPokemonOneAdj[2] -=damage
+                        moveEffectivenessPrint(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice)
+                        time.sleep(.7)
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False)
+                    else:
+                        print(userPokemonOne[19] + " missed " + cpuPokemonOne[1] +".")
+                        time.sleep(.7)
+                else:
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[19] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
+                    if moveAccuracy == True:
+                        time.sleep(.7)
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False)
+            elif moveChoice == 3:
+                if userPokemonOneAdj[31] == 1 or userPokemonOneAdj[31] == 2:
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[28] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
+                    if moveAccuracy == True:
+                        damage = int(fullDamageCalc(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice, userPokemonOne, cpuPokemonOne))
+                        cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] - damage
+                        moveEffectivenessPrint(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice)
+                        time.sleep(.7)
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False)
+                    else:
+                        print(userPokemonOne[28] + " missed " + cpuPokemonOne[1] +".")
+                        time.sleep(.7)
+                else:
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[28] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
+                    if moveAccuracy == True:
+                        time.sleep(.7)
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False)
+            elif moveChoice == 4:
+                if userPokemonOneAdj[40] == 1 or userPokemonOneAdj[40] == 2:
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[37] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
+                    if moveAccuracy == True:
+                        damage = int(fullDamageCalc(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice, userPokemonOne, cpuPokemonOne))
+                        cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] - damage
+                        moveEffectivenessPrint(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice)
+                        time.sleep(.7)
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False)
+                    else:
+                        print(userPokemonOne[37] + " missed " + cpuPokemonOne[1] +".")
+                        time.sleep(.7)
+                else:
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[37] + ".")
+                    time.sleep(.7)
+                    moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
+                    if moveAccuracy == True:
+                        time.sleep(.7)
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False) 
 if __name__ == '__main__':
     main()

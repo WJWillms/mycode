@@ -44,3 +44,9 @@ Move 4 Accuracy
 Move 4 Priority
 Move 4 PP
 Move 4 Special Trait
+Ascii Length
+Attack Stage
+SpAttack Stage
+Defense Stage
+SpDefense Stage
+Speed Stage
