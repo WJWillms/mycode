@@ -6,6 +6,7 @@ import time
 import curses
 import textwrap
 import copy
+import math
 
 #Types assigned to a number value for computing
 # 1=Grass, 2=Fire, 3=Water, 4=Flying, 5=Electric, 6=Poison, 7=Bug, 8=Normal, 9=Ground, 10=Fairy,11=Dark 12=Fighting, 13=Psychic, 14=Rock,
@@ -111,8 +112,8 @@ def clearscreen():
 
 #Grabs cpu pokemon stats
 def CPUChoice():
-    num = 0#random.randint(0,0)
-    pokemon_DB = ["Venusaur.txt"]
+    num = random.randint(0,2)
+    pokemon_DB = ["Venusaur.txt", "Charizard.txt", "Blastoise.txt"]
     text = pokemon_DB[num]
     configfile = open(text, "r")
     party_Pokemon = []
@@ -130,7 +131,7 @@ def CPUChoice():
 
 #Grabs the text file for stats
 def StatDB(num):
-    pokemon_DB = ["Venusaur.txt"]
+    pokemon_DB = ["Venusaur.txt", "Charizard.txt", "Blastoise.txt"]
     num = pokemon_DB[num-1]
     configfile = open(num, "r")
     party_Pokemon = []
@@ -147,8 +148,8 @@ def StatDB(num):
 
 #Ascii's courtesy of https://www.fiikus.net/?pokedex
 def asciiRead(player,cpu):
-    asciiDB = ["VenusaurAscii.txt"]
-    cpuAsciiDB = ["VenusaurAsciiCpu.txt"]
+    asciiDB = ["VenusaurAscii.txt", "CharizardAscii.txt", "BlastoiseAscii.txt"]
+    cpuAsciiDB = ["VenusaurAsciiCpu.txt", "CharizardAsciiCpu.txt", "BlastoiseAsciiCpu.txt"]
     playerAscii = asciiDB[player]
     cpuAscii = cpuAsciiDB[cpu]
     with open(playerAscii, 'r') as file1, open(cpuAscii, 'r') as file2:
@@ -264,11 +265,13 @@ def typeCalc(atkType, defTypeOne, defTypeTwo):
         if (defTypeOne == 12):
             modifier = modifier * 0.5
     elif atkType == 9:
-        if (defTypeOne == 2) or \
+        if (defTypeOne == 4):
+            modifier = modifier * 0
+        elif (defTypeOne == 2) or \
             (defTypeOne == 5) or \
-            (defTypeOne == 5) or \
-            (defTypeOne == 5) or \
-            (defTypeOne == 6):
+            (defTypeOne == 6) or \
+            (defTypeOne == 14) or \
+            (defTypeOne == 15):
                 modifier = modifier * 2
         elif (defTypeOne == 1) or \
             (defTypeOne == 3) or \
@@ -422,11 +425,13 @@ def typeCalc(atkType, defTypeOne, defTypeTwo):
         if (defTypeTwo == 12):
             modifier = modifier * 0.5
     elif atkType == 9:
-        if (defTypeTwo == 2) or \
+        if (defTypeTwo == 4):
+            modifier = modifier * 0
+        elif (defTypeTwo == 2) or \
             (defTypeTwo == 5) or \
-            (defTypeTwo == 5) or \
-            (defTypeTwo == 5) or \
-            (defTypeTwo == 6):
+            (defTypeTwo == 6) or \
+            (defTypeTwo == 14) or \
+            (defTypeTwo == 15):
                 modifier = modifier * 2
         elif (defTypeTwo == 1) or \
             (defTypeTwo == 3) or \
@@ -529,9 +534,30 @@ def statsDisplay(player, cpu):
     print(cpu[1])
 
 def hpDisplay(player, playerAdj, cpu, cpuAdj):
+    global userPokemonOneBinaries
+    global cpuPokemonOneBinaries
+
+    playerAdj[2] = int(playerAdj[2])
+    cpuAdj[2] = int(cpuAdj[2])
     for i in range(player[46]-len(str(player[2])) - len(str(playerAdj[2])) - 1):
           print(" ", end="")
     print(str(playerAdj[2]) + "/" + str(player[2]) + "|                  |" + str(cpuAdj[2]) + "/" + str(cpu[2]))
+    if userPokemonOneBinaries[8] == True or cpuPokemonOneBinaries[8] == True:
+        for i in range(player[46] - 3):
+            print(" ", end="")
+        if userPokemonOneBinaries[8] == True:
+            if userPokemonOneBinaries[1] == True:
+                print("BRN|                  |", end="")
+            elif userPokemonOneBinaries[2] == True:
+                print("PSN|                  |", end="")
+        else:
+            print("   |                  |", end="")
+        if cpuPokemonOneBinaries[1] == True:
+            print("BRN")
+        elif cpuPokemonOneBinaries[2] == True:
+            print("PSN")
+        else:
+            print("")
 
 def moveDisplay(pokemon):
     #firstSpace and the following if else is for output blank spacing formmating
@@ -725,7 +751,7 @@ def fullDamageCalc(attacker, defender, move, attackerOrig, DefenderOrig):
     return damage
 
 
-def userSpecialAbilities(move, userPokemon, effect):
+def userSpecialAbilities(move, userPokemon, effect, damage):
     global userFieldBinaries
     global cpuFieldBinaries
     global weatherBinaries
@@ -743,6 +769,8 @@ def userSpecialAbilities(move, userPokemon, effect):
     #2 Sludge Bomb or 30% poison chance
     #3 Synthesis
     #4 Hidden Power damage modifier
+    #5 Dragon Dance
+    #6 Flare Blitz
 
     if move == 1:
         if userPokemon[18] == 0:
@@ -755,17 +783,34 @@ def userSpecialAbilities(move, userPokemon, effect):
                     cpuPokemonOneBinaries[0] = True
                     cpuPokemonOneBinaries[7] = True
                     print("The opposing " + cpuPokemonOne[1] + " was seeded.")
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 else:
                     print("The opposing " + cpuPokemonOne[1] + " was already seeded.")
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
         elif userPokemon[18] == 2:
             if afterEffect == True:
                 return
             else:
                 num = random.randint(1,100)
                 if num > 69:
-                    if cpuPokemonOneBinaries[2] == False:
+                    if cpuPokemonOneBinaries[2] == False and cpuPokemonOneBinaries[8] == False:
                         print("The opposing " + cpuPokemonOne[1] + " was poisoned.")
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                         cpuPokemonOneBinaries[2] = True
+                        cpuPokemonOneBinaries[8] = True
+                        cpuPokemonOneBinaries[0] = True
                     
         elif userPokemon[18] == 3:
             if afterEffect == True:
@@ -778,11 +823,144 @@ def userSpecialAbilities(move, userPokemon, effect):
                 else:
                     userPokemonOneAdj[2] = userPokemonOneAdj[2] + (userPokemonOne[2] * (1/2))
                 print("Your " + userPokemon[1] + " was healed.")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                statsDisplay(userPokemonOne, cpuPokemonOne)
+                hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 if userPokemonOneAdj[2] > userPokemonOne[2]:
-                    userPokemonOneAdj[2] = userPokemonOne[2]
+                    userPokemonOneAdj[2] = copy.deepcopy(userPokemonOne[2])
         elif userPokemon[18] == 4:
             num = random.randint(30,70)
             userPokemonOneAdj[14] = num
+        elif userPokemon[18] == 5:
+            if afterEffect == True:
+                return
+            else:
+                userPokemonOneAdj[48] += 1
+                userPokemonOneAdj[52] += 1
+                if userPokemon[48] > 6:
+                    print(userPokemonOne[1] + "'s attack stat cannot go any higher.")
+                    time.sleep(1.2)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                    userPokemonOneAdj[48] = 6
+                else:
+                    print(userPokemonOne[1] + "'s attack was raised.")
+                    if userPokemonOneAdj[48] == 1:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * 1.5
+                    elif userPokemonOneAdj[48] == 2:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * 2
+                    elif userPokemonOneAdj[48] == 3:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * 2.5
+                    elif userPokemonOneAdj[48] == 4:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * 3
+                    elif userPokemonOneAdj[48] == 5:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * 3.5
+                    elif userPokemonOneAdj[48] == 6:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * 4
+                    elif userPokemonOneAdj[48] == -1:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * .67
+                    elif userPokemonOneAdj[48] == -2:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * .5
+                    elif userPokemonOneAdj[48] == -3:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * .4
+                    elif userPokemonOneAdj[48] == -4:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * .33
+                    elif userPokemonOneAdj[48] == -5:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * .29
+                    elif userPokemonOneAdj[48] == -6:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * .25
+                    elif userPokemonOneAdj[48] == 0:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * 1
+                if userPokemon[52] > 6:
+                    print(userPokemonOne[1] + "'s speed stat cannot go any higher.")
+                    time.sleep(1.2)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                    userPokemonOneAdj[52] = 6
+                else:
+                    print(userPokemonOne[1] + "'s speed was raised.")
+                    time.sleep(1.2)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                    if userPokemonOneAdj[52] == 1:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * 1.5
+                    elif userPokemonOneAdj[52] == 2:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * 2
+                    elif userPokemonOneAdj[52] == 3:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * 2.5
+                    elif userPokemonOneAdj[52] == 4:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * 3
+                    elif userPokemonOneAdj[52] == 5:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * 3.5
+                    elif userPokemonOneAdj[52] == 6:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * 4
+                    elif userPokemonOneAdj[52] == -1:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * .67
+                    elif userPokemonOneAdj[52] == -2:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * .5
+                    elif userPokemonOneAdj[52] == -3:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * .4
+                    elif userPokemonOneAdj[52] == -4:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * .33
+                    elif userPokemonOneAdj[52] == -5:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * .29
+                    elif userPokemonOneAdj[52] == -6:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * .25
+                    elif userPokemonOneAdj[52] == 0:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * 1
+        elif userPokemon[18] == 6:
+            if afterEffect == True:
+                return
+            if damage > 0:
+                print(userPokemonOne[1] + " was hit with recoil.")
+                userPokemonOneAdj[2] = userPokemonOneAdj[2] - (damage/3)
+                num = random.randint(1,100)
+                if num > 89:
+                    if cpuPokemonOneBinaries[1] == False and cpuPokemonOneBinaries[8] == False:
+                        print("The opposing " + cpuPokemonOne[1] + " was burned.")
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                        cpuPokemonOneBinaries[1] = True
+                        cpuPokemonOneBinaries[8] = True
+                        cpuPokemonOneBinaries[0] = True
+        elif userPokemon[18] == 7:
+            if afterEffect == True:
+                return
+            if userPokemonOneBinaries[7] == True:
+                print("Leech seed was removed from the field.")
+                userPokemonOneBinaries[7] = False
+                time.sleep(1)
+                clearscreen()
+                asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                statsDisplay(userPokemonOne, cpuPokemonOne)
+                hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+        elif userPokemon[18] == 8:
+            if afterEffect == True:
+                return
+            else:
+                num = random.randint(1,100)
+                if num > 69:
+                    if cpuPokemonOneBinaries[1] == False and cpuPokemonOneBinaries[8] == False:
+                        print("The opposing " + cpuPokemonOne[1] + " was burned.")
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                        cpuPokemonOneBinaries[1] = True
+                        cpuPokemonOneBinaries[8] = True
+                        cpuPokemonOneBinaries[0] = True
 
 
 
@@ -798,17 +976,34 @@ def userSpecialAbilities(move, userPokemon, effect):
                     cpuPokemonOneBinaries[0] = True
                     cpuPokemonOneBinaries[7] = True
                     print("The opposing " + cpuPokemonOne[1] + " was seeded.")
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 else:
                     print("The opposing " + cpuPokemonOne[1] + " was already seeded.")
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
         elif userPokemon[27] == 2:
             if afterEffect == True:
                 return
             else:
                 num = random.randint(1,100)
                 if num > 69:
-                    if cpuPokemonOneBinaries[2] == False:
+                    if cpuPokemonOneBinaries[2] == False and cpuPokemonOneBinaries[8] == False :
                         print("The opposing " + cpuPokemonOne[1] + " was poisoned.")
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                         cpuPokemonOneBinaries[2] = True
+                        cpuPokemonOneBinaries[8] = True
+                        cpuPokemonOneBinaries[0] = True
         elif userPokemon[27] == 3:
             if afterEffect == True:
                 return
@@ -820,12 +1015,142 @@ def userSpecialAbilities(move, userPokemon, effect):
                 else:
                     userPokemonOneAdj[2] = userPokemonOneAdj[2] + (userPokemonOne[2] * (1/2))
                 print("Your " + userPokemon[1] + " was healed.")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                statsDisplay(userPokemonOne, cpuPokemonOne)
+                hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 if userPokemonOneAdj[2] > userPokemonOne[2]:
-                    userPokemonOneAdj[2] = userPokemonOne[2]
+                    userPokemonOneAdj[2] = copy.deepcopy(userPokemonOne[2])
         elif userPokemon[27] == 4:
             num = random.randint(30,70)
             userPokemonOneAdj[23] = num
-
+        elif userPokemon[27] == 5:
+            if afterEffect == True:
+                return
+            else:
+                userPokemonOneAdj[48] += 1
+                userPokemonOneAdj[52] += 1
+                if userPokemon[48] > 6:
+                    print(userPokemonOne[1] + "'s attack stat cannot go any higher.")
+                    time.sleep(1.2)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                    userPokemonOneAdj[48] = 6
+                else:
+                    print(userPokemonOne[1] + "'s attack was raised.")
+                    if userPokemonOneAdj[48] == 1:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * 1.5
+                    elif userPokemonOneAdj[48] == 2:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * 2
+                    elif userPokemonOneAdj[48] == 3:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * 2.5
+                    elif userPokemonOneAdj[48] == 4:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * 3
+                    elif userPokemonOneAdj[48] == 5:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * 3.5
+                    elif userPokemonOneAdj[48] == 6:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * 4
+                    elif userPokemonOneAdj[48] == -1:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * .67
+                    elif userPokemonOneAdj[48] == -2:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * .5
+                    elif userPokemonOneAdj[48] == -3:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * .4
+                    elif userPokemonOneAdj[48] == -4:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * .33
+                    elif userPokemonOneAdj[48] == -5:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * .29
+                    elif userPokemonOneAdj[48] == -6:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * .25
+                    elif userPokemonOneAdj[48] == 0:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * 1
+                if userPokemon[52] > 6:
+                    print(userPokemonOne[1] + "'s speed stat cannot go any higher.")
+                    time.sleep(1.2)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                    userPokemonOneAdj[52] = 6
+                else:
+                    print(userPokemonOne[1] + "'s speed was raised.")
+                    time.sleep(1.2)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                    if userPokemonOneAdj[52] == 1:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * 1.5
+                    elif userPokemonOneAdj[52] == 2:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * 2
+                    elif userPokemonOneAdj[52] == 3:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * 2.5
+                    elif userPokemonOneAdj[52] == 4:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * 3
+                    elif userPokemonOneAdj[52] == 5:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * 3.5
+                    elif userPokemonOneAdj[52] == 6:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * 4
+                    elif userPokemonOneAdj[52] == -1:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * .67
+                    elif userPokemonOneAdj[52] == -2:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * .5
+                    elif userPokemonOneAdj[52] == -3:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * .4
+                    elif userPokemonOneAdj[52] == -4:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * .33
+                    elif userPokemonOneAdj[52] == -5:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * .29
+                    elif userPokemonOneAdj[52] == -6:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * .25
+                    elif userPokemonOneAdj[52] == 0:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * 1
+        elif userPokemon[27] == 6:
+            if damage > 0:
+                print(userPokemonOne[1] + " was hit with recoil.")
+                userPokemonOneAdj[2] = userPokemonOneAdj[2] - (damage/3)
+                num = random.randint(1,100)
+                if num > 89:
+                    if cpuPokemonOneBinaries[1] == False and cpuPokemonOneBinaries[8] == False:
+                        print("The opposing " + cpuPokemonOne[1] + " was burned.")
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                        cpuPokemonOneBinaries[1] = True
+                        cpuPokemonOneBinaries[8] = True
+                        cpuPokemonOneBinaries[0] = True
+        elif userPokemon[27] == 7:
+            if afterEffect == True:
+                return
+            if userPokemonOneBinaries[7] == True:
+                print("Leech seed was removed from the field.")
+                userPokemonOneBinaries[7] = False
+                time.sleep(1)
+                clearscreen()
+                asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                statsDisplay(userPokemonOne, cpuPokemonOne)
+                hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+        elif userPokemon[27] == 8:
+            if afterEffect == True:
+                return
+            else:
+                num = random.randint(1,100)
+                if num > 69:
+                    if cpuPokemonOneBinaries[1] == False and cpuPokemonOneBinaries[8] == False:
+                        print("The opposing " + cpuPokemonOne[1] + " was burned.")
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                        cpuPokemonOneBinaries[1] = True
+                        cpuPokemonOneBinaries[8] = True
+                        cpuPokemonOneBinaries[0] = True
 
 
     elif move == 3:
@@ -839,17 +1164,34 @@ def userSpecialAbilities(move, userPokemon, effect):
                     cpuPokemonOneBinaries[0] = True
                     cpuPokemonOneBinaries[7] = True
                     print("The opposing " + cpuPokemonOne[1] + " was seeded.")
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 else:
                     print("The opposing " + cpuPokemonOne[1] + " was already seeded.")
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
         elif userPokemon[36] == 2:
             if afterEffect == True:
                 return
             else:
                 num = random.randint(1,100)
                 if num > 69:
-                    if cpuPokemonOneBinaries[2] == False:
+                    if cpuPokemonOneBinaries[2] == False and cpuPokemonOneBinaries[8] == False:
                         print("The opposing " + cpuPokemonOne[1] + " was poisoned.")
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                         cpuPokemonOneBinaries[2] = True
+                        cpuPokemonOneBinaries[8] = True
+                        cpuPokemonOneBinaries[0] = True
         elif userPokemon[36] == 3:
             if afterEffect == True:
                 return
@@ -861,13 +1203,142 @@ def userSpecialAbilities(move, userPokemon, effect):
                 else:
                     userPokemonOneAdj[2] = userPokemonOneAdj[2] + (userPokemonOne[2] * (1/2))
                 print("Your " + userPokemon[1] + " was healed.")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                statsDisplay(userPokemonOne, cpuPokemonOne)
+                hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 if userPokemonOneAdj[2] > userPokemonOne[2]:
-                    userPokemonOneAdj[2] = userPokemonOne[2]
+                    userPokemonOneAdj[2] = copy.deepcopy(userPokemonOne[2])
         elif userPokemon[36] == 4:
             num = random.randint(30,70)
             userPokemonOneAdj[32] = num
-
-
+        elif userPokemon[36] == 5:
+            if afterEffect == True:
+                return
+            else:
+                userPokemonOneAdj[48] += 1
+                userPokemonOneAdj[52] += 1
+                if userPokemon[48] > 6:
+                    print(userPokemonOne[1] + "'s attack stat cannot go any higher.")
+                    time.sleep(1.2)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                    userPokemonOneAdj[48] = 6
+                else:
+                    print(userPokemonOne[1] + "'s attack was raised.")
+                    if userPokemonOneAdj[48] == 1:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * 1.5
+                    elif userPokemonOneAdj[48] == 2:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * 2
+                    elif userPokemonOneAdj[48] == 3:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * 2.5
+                    elif userPokemonOneAdj[48] == 4:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * 3
+                    elif userPokemonOneAdj[48] == 5:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * 3.5
+                    elif userPokemonOneAdj[48] == 6:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * 4
+                    elif userPokemonOneAdj[48] == -1:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * .67
+                    elif userPokemonOneAdj[48] == -2:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * .5
+                    elif userPokemonOneAdj[48] == -3:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * .4
+                    elif userPokemonOneAdj[48] == -4:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * .33
+                    elif userPokemonOneAdj[48] == -5:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * .29
+                    elif userPokemonOneAdj[48] == -6:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * .25
+                    elif userPokemonOneAdj[48] == 0:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * 1
+                if userPokemon[52] > 6:
+                    print(userPokemonOne[1] + "'s speed stat cannot go any higher.")
+                    time.sleep(1.2)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                    userPokemonOneAdj[52] = 6
+                else:
+                    print(userPokemonOne[1] + "'s speed was raised.")
+                    time.sleep(1.2)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                    if userPokemonOneAdj[52] == 1:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * 1.5
+                    elif userPokemonOneAdj[52] == 2:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * 2
+                    elif userPokemonOneAdj[52] == 3:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * 2.5
+                    elif userPokemonOneAdj[52] == 4:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * 3
+                    elif userPokemonOneAdj[52] == 5:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * 3.5
+                    elif userPokemonOneAdj[52] == 6:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * 4
+                    elif userPokemonOneAdj[52] == -1:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * .67
+                    elif userPokemonOneAdj[52] == -2:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * .5
+                    elif userPokemonOneAdj[52] == -3:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * .4
+                    elif userPokemonOneAdj[52] == -4:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * .33
+                    elif userPokemonOneAdj[52] == -5:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * .29
+                    elif userPokemonOneAdj[52] == -6:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * .25
+                    elif userPokemonOneAdj[52] == 0:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * 1
+        elif userPokemon[36] == 6:
+            if damage > 0:
+                print(userPokemonOne[1] + " was hit with recoil.")
+                userPokemonOneAdj[2] = userPokemonOneAdj[2] - (damage/3)
+                num = random.randint(1,100)
+                if num > 89:
+                    if cpuPokemonOneBinaries[1] == False and cpuPokemonOneBinaries[8] == False:
+                        print("The opposing " + cpuPokemonOne[1] + " was burned.")
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                        cpuPokemonOneBinaries[1] = True
+                        cpuPokemonOneBinaries[8] = True
+                        cpuPokemonOneBinaries[0] = True
+        elif userPokemon[36] == 7:
+            if afterEffect == True:
+                return
+            if userPokemonOneBinaries[7] == True:
+                print("Leech seed was removed from the field.")
+                userPokemonOneBinaries[7] = False
+                time.sleep(1)
+                clearscreen()
+                asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                statsDisplay(userPokemonOne, cpuPokemonOne)
+                hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+        elif userPokemon[36] == 8:
+            if afterEffect == True:
+                return
+            else:
+                num = random.randint(1,100)
+                if num > 69:
+                    if cpuPokemonOneBinaries[1] == False and cpuPokemonOneBinaries[8] == False:
+                        print("The opposing " + cpuPokemonOne[1] + " was burned.")
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                        cpuPokemonOneBinaries[1] = True
+                        cpuPokemonOneBinaries[8] = True
+                        cpuPokemonOneBinaries[0] = True
 
 
     elif move == 4:
@@ -881,17 +1352,34 @@ def userSpecialAbilities(move, userPokemon, effect):
                     cpuPokemonOneBinaries[0] = True
                     cpuPokemonOneBinaries[7] = True
                     print("The opposing " + cpuPokemonOne[1] + " was seeded.")
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 else:
                     print("The opposing " + cpuPokemonOne[1] + " was already seeded.")
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
         elif userPokemon[45] == 2:
             if afterEffect == True:
                 return
             else:
                 num = random.randint(1,100)
                 if num > 69:
-                    if cpuPokemonOneBinaries[2] == False:
+                    if cpuPokemonOneBinaries[2] == False and cpuPokemonOneBinaries[8] == False:
                         print("The opposing " + cpuPokemonOne[1] + " was poisoned.")
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                         cpuPokemonOneBinaries[2] = True
+                        cpuPokemonOneBinaries[8] = True
+                        cpuPokemonOneBinaries[0] = True
         elif userPokemon[45] == 3:
             if afterEffect == True:
                 return
@@ -903,16 +1391,146 @@ def userSpecialAbilities(move, userPokemon, effect):
                 else:
                     userPokemonOneAdj[2] = userPokemonOneAdj[2] + (userPokemonOne[2] * (1/2))
                 print("Your " + userPokemon[1] + " was healed.")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                statsDisplay(userPokemonOne, cpuPokemonOne)
+                hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 if userPokemonOneAdj[2] > userPokemonOne[2]:
-                    userPokemonOneAdj[2] = userPokemonOne[2]
+                    userPokemonOneAdj[2] = copy.deepcopy(userPokemonOne[2])
         elif userPokemon[45] == 4:
             num = random.randint(30,70)
             userPokemonOneAdj[41] = num
+        elif userPokemon[45] == 5:
+            if afterEffect == True:
+                return
+            else:
+                userPokemonOneAdj[48] += 1
+                userPokemonOneAdj[52] += 1
+                if userPokemon[48] > 6:
+                    print(userPokemonOne[1] + "'s attack stat cannot go any higher.")
+                    time.sleep(1.2)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                    userPokemonOneAdj[48] = 6
+                else:
+                    print(userPokemonOne[1] + "'s attack was raised.")
+                    if userPokemonOneAdj[48] == 1:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * 1.5
+                    elif userPokemonOneAdj[48] == 2:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * 2
+                    elif userPokemonOneAdj[48] == 3:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * 2.5
+                    elif userPokemonOneAdj[48] == 4:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * 3
+                    elif userPokemonOneAdj[48] == 5:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * 3.5
+                    elif userPokemonOneAdj[48] == 6:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * 4
+                    elif userPokemonOneAdj[48] == -1:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * .67
+                    elif userPokemonOneAdj[48] == -2:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * .5
+                    elif userPokemonOneAdj[48] == -3:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * .4
+                    elif userPokemonOneAdj[48] == -4:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * .33
+                    elif userPokemonOneAdj[48] == -5:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * .29
+                    elif userPokemonOneAdj[48] == -6:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * .25
+                    elif userPokemonOneAdj[48] == 0:
+                        userPokemonOneAdj[3] = userPokemonOne[3] * 1
+                if userPokemon[52] > 6:
+                    print(userPokemonOne[1] + "'s speed stat cannot go any higher.")
+                    time.sleep(1.2)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                    userPokemonOneAdj[52] = 6
+                else:
+                    print(userPokemonOne[1] + "'s speed was raised.")
+                    time.sleep(1.2)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                    if userPokemonOneAdj[52] == 1:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * 1.5
+                    elif userPokemonOneAdj[52] == 2:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * 2
+                    elif userPokemonOneAdj[52] == 3:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * 2.5
+                    elif userPokemonOneAdj[52] == 4:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * 3
+                    elif userPokemonOneAdj[52] == 5:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * 3.5
+                    elif userPokemonOneAdj[52] == 6:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * 4
+                    elif userPokemonOneAdj[52] == -1:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * .67
+                    elif userPokemonOneAdj[52] == -2:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * .5
+                    elif userPokemonOneAdj[52] == -3:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * .4
+                    elif userPokemonOneAdj[52] == -4:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * .33
+                    elif userPokemonOneAdj[52] == -5:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * .29
+                    elif userPokemonOneAdj[52] == -6:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * .25
+                    elif userPokemonOneAdj[52] == 0:
+                        userPokemonOneAdj[7] = userPokemonOne[3] * 1
+        elif userPokemon[45] == 6:
+            if damage > 0:
+                print(userPokemonOne[1] + " was hit with recoil.")
+                userPokemonOneAdj[2] = userPokemonOneAdj[2] - (damage/3)
+                num = random.randint(1,100)
+                if num > 89:
+                    if cpuPokemonOneBinaries[1] == False and cpuPokemonOneBinaries[8] == False:
+                        print("The opposing " + cpuPokemonOne[1] + " was burned.")
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                        cpuPokemonOneBinaries[1] = True
+                        cpuPokemonOneBinaries[8] = True
+                        cpuPokemonOneBinaries[0] = True
+        elif userPokemon[45] == 7:
+            if afterEffect == True:
+                return
+            if userPokemonOneBinaries[7] == True:
+                print("Leech seed was removed from the field.")
+                userPokemonOneBinaries[7] = False
+                time.sleep(1)
+                clearscreen()
+                asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                statsDisplay(userPokemonOne, cpuPokemonOne)
+                hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+        elif userPokemon[45] == 8:
+            if afterEffect == True:
+                return
+            else:
+                num = random.randint(1,100)
+                if num > 69:
+                    if cpuPokemonOneBinaries[1] == False and cpuPokemonOneBinaries[8] == False:
+                        print("The opposing " + cpuPokemonOne[1] + " was burned.")
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                        cpuPokemonOneBinaries[1] = True
+                        cpuPokemonOneBinaries[8] = True
+                        cpuPokemonOneBinaries[0] = True
 
 
 
-
-def cpuSpecialAbilities(move, cpuPokemon, effect):
+def cpuSpecialAbilities(move, cpuPokemon, effect, damage):
     global userFieldBinaries
     global cpuFieldBinaries
     global weatherBinaries
@@ -942,17 +1560,34 @@ def cpuSpecialAbilities(move, cpuPokemon, effect):
                     userPokemonOneBinaries[0] = True
                     userPokemonOneBinaries[7] = True
                     print("your " + userPokemonOne[1] + " was seeded.")
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 else:
                     print("your " + userPokemonOne[1] + " was already seeded.")
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
         elif cpuPokemon[18] == 2:
             if afterEffect == True:
                 return
             else:
                 num = random.randint(1,100)
                 if num > 69:
-                    if userPokemonOneBinaries[2] == False:
+                    if userPokemonOneBinaries[2] == False and userPokemonOneBinaries[8] == False:
                         print("The opposing " + userPokemonOne[1] + " was poisoned.")
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                         userPokemonOneBinaries[2] = True
+                        userPokemonOneBinaries[8] = True
+                        userPokemonOneBinaries[0] = True
                     
         elif cpuPokemon[18] == 3:
             if afterEffect == True:
@@ -965,12 +1600,142 @@ def cpuSpecialAbilities(move, cpuPokemon, effect):
                 else:
                     cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] + (cpuPokemonOne[2] * (1/2))
                 print("The opposing " + cpuPokemon[1] + " was healed.")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                statsDisplay(userPokemonOne, cpuPokemonOne)
+                hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 if cpuPokemonOneAdj[2] > cpuPokemonOne[2]:
-                    cpuPokemonOneAdj[2] = cpuPokemonOne[2]
+                    cpuPokemonOneAdj[2] = copy.deepcopy(cpuPokemonOne[2])
         elif cpuPokemon[18] == 4:
             num = random.randint(30,70)
             cpuPokemonOneAdj[14] = num
-
+        elif cpuPokemon[18] == 5:
+            if afterEffect == True:
+                return
+            else:
+                cpuPokemonOneAdj[48] += 1
+                cpuPokemonOneAdj[52] += 1
+                if cpuPokemon[48] > 6:
+                    print(cpuPokemonOne[1] + "'s attack stat cannot go any higher.")
+                    time.sleep(1.2)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                    cpuPokemonOneAdj[48] = 6
+                else:
+                    print(cpuPokemonOne[1] + "'s attack was raised.")
+                    if cpuPokemonOneAdj[48] == 1:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * 1.5
+                    elif cpuPokemonOneAdj[48] == 2:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * 2
+                    elif cpuPokemonOneAdj[48] == 3:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * 2.5
+                    elif cpuPokemonOneAdj[48] == 4:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * 3
+                    elif cpuPokemonOneAdj[48] == 5:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * 3.5
+                    elif cpuPokemonOneAdj[48] == 6:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * 4
+                    elif cpuPokemonOneAdj[48] == -1:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * .67
+                    elif cpuPokemonOneAdj[48] == -2:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * .5
+                    elif cpuPokemonOneAdj[48] == -3:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * .4
+                    elif cpuPokemonOneAdj[48] == -4:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * .33
+                    elif cpuPokemonOneAdj[48] == -5:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * .29
+                    elif cpuPokemonOneAdj[48] == -6:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * .25
+                    elif cpuPokemonOneAdj[48] == 0:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * 1
+                if cpuPokemon[52] > 6:
+                    print(cpuPokemonOne[1] + "'s speed stat cannot go any higher.")
+                    time.sleep(1.2)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                    cpuPokemonOneAdj[52] = 6
+                else:
+                    print(cpuPokemonOne[1] + "'s speed was raised.")
+                    time.sleep(1.2)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                    if cpuPokemonOneAdj[52] == 1:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * 1.5
+                    elif cpuPokemonOneAdj[52] == 2:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * 2
+                    elif cpuPokemonOneAdj[52] == 3:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * 2.5
+                    elif cpuPokemonOneAdj[52] == 4:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * 3
+                    elif cpuPokemonOneAdj[52] == 5:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * 3.5
+                    elif cpuPokemonOneAdj[52] == 6:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * 4
+                    elif cpuPokemonOneAdj[52] == -1:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * .67
+                    elif cpuPokemonOneAdj[52] == -2:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * .5
+                    elif cpuPokemonOneAdj[52] == -3:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * .4
+                    elif cpuPokemonOneAdj[52] == -4:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * .33
+                    elif cpuPokemonOneAdj[52] == -5:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * .29
+                    elif cpuPokemonOneAdj[52] == -6:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * .25
+                    elif cpuPokemonOneAdj[52] == 0:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * 1
+        elif cpuPokemon[18] == 6:
+            if damage > 0:
+                print(cpuPokemonOne[1] + " was hit with recoil.")
+                cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] - (damage/3)
+                num = random.randint(1,100)
+                if num > 89:
+                    if userPokemonOneBinaries[1] == False and userPokemonOneBinaries[8] == False:
+                        print("Your " + cpuPokemonOne[1] + " was burned.")
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                        userPokemonOneBinaries[1] = True
+                        userPokemonOneBinaries[8] = True
+                        userPokemonOneBinaries[0] = True
+        elif cpuPokemon[18] == 7:
+            if afterEffect == True:
+                return
+            if cpuPokemonOneBinaries[7] == True:
+                print("Leech seed was removed from the field.")
+                cpuPokemonOneBinaries[7] = False
+                time.sleep(1)
+                clearscreen()
+                asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                statsDisplay(userPokemonOne, cpuPokemonOne)
+                hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+        elif cpuPokemon[18] == 8:
+            if afterEffect == True:
+                return
+            else:
+                num = random.randint(1,100)
+                if num > 69:
+                    if userPokemonOneBinaries[1] == False and userPokemonOneBinaries[8] == False:
+                        print("Your " + cpuPokemonOne[1] + " was burned.")
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                        userPokemonOneBinaries[1] = True
+                        userPokemonOneBinaries[8] = True
+                        userPokemonOneBinaries[0] = True
 
     elif move == 2:
         if cpuPokemon[27] == 0:
@@ -983,17 +1748,34 @@ def cpuSpecialAbilities(move, cpuPokemon, effect):
                     userPokemonOneBinaries[0] = True
                     userPokemonOneBinaries[7] = True
                     print("Your " + userPokemonOne[1] + " was seeded.")
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 else:
                     print("Your " + userPokemonOne[1] + " was already seeded.")
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
         elif cpuPokemon[27] == 2:
             if afterEffect == True:
                 return
             else:
                 num = random.randint(1,100)
                 if num > 69:
-                    if userPokemonOneBinaries[2] == False:
+                    if userPokemonOneBinaries[2] == False and userPokemonOneBinaries[8] == False:
                         print("Your " + userPokemonOne[1] + " was poisoned.")
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                         userPokemonOneBinaries[2] = True
+                        userPokemonOneBinaries[8] = True
+                        userPokemonOneBinaries[0] = True
         elif cpuPokemon[27] == 3:
             if afterEffect == True:
                 return
@@ -1005,12 +1787,142 @@ def cpuSpecialAbilities(move, cpuPokemon, effect):
                 else:
                     cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] + (cpuPokemonOne[2] * (1/2))
                 print("The opposing " + cpuPokemon[1] + " was healed.")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                statsDisplay(userPokemonOne, cpuPokemonOne)
+                hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 if cpuPokemonOneAdj[2] > cpuPokemonOne[2]:
-                    cpuPokemonOneAdj[2] = cpuPokemonOne[2]
+                    cpuPokemonOneAdj[2] = copy.deepcopy(cpuPokemonOne[2])
         elif cpuPokemon[27] == 4:
             num = random.randint(30,70)
             cpuPokemonOneAdj[23] = num
-
+        elif cpuPokemon[27] == 5:
+            if afterEffect == True:
+                return
+            else:
+                cpuPokemonOneAdj[48] += 1
+                cpuPokemonOneAdj[52] += 1
+                if cpuPokemon[48] > 6:
+                    print(cpuPokemonOne[1] + "'s attack stat cannot go any higher.")
+                    time.sleep(1.2)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                    cpuPokemonOneAdj[48] = 6
+                else:
+                    print(cpuPokemonOne[1] + "'s attack was raised.")
+                    if cpuPokemonOneAdj[48] == 1:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * 1.5
+                    elif cpuPokemonOneAdj[48] == 2:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * 2
+                    elif cpuPokemonOneAdj[48] == 3:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * 2.5
+                    elif cpuPokemonOneAdj[48] == 4:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * 3
+                    elif cpuPokemonOneAdj[48] == 5:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * 3.5
+                    elif cpuPokemonOneAdj[48] == 6:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * 4
+                    elif cpuPokemonOneAdj[48] == -1:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * .67
+                    elif cpuPokemonOneAdj[48] == -2:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * .5
+                    elif cpuPokemonOneAdj[48] == -3:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * .4
+                    elif cpuPokemonOneAdj[48] == -4:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * .33
+                    elif cpuPokemonOneAdj[48] == -5:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * .29
+                    elif cpuPokemonOneAdj[48] == -6:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * .25
+                    elif cpuPokemonOneAdj[48] == 0:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * 1
+                if cpuPokemon[52] > 6:
+                    print(cpuPokemonOne[1] + "'s speed stat cannot go any higher.")
+                    time.sleep(1.2)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                    cpuPokemonOneAdj[52] = 6
+                else:
+                    print(cpuPokemonOne[1] + "'s speed was raised.")
+                    time.sleep(1.2)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                    if cpuPokemonOneAdj[52] == 1:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * 1.5
+                    elif cpuPokemonOneAdj[52] == 2:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * 2
+                    elif cpuPokemonOneAdj[52] == 3:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * 2.5
+                    elif cpuPokemonOneAdj[52] == 4:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * 3
+                    elif cpuPokemonOneAdj[52] == 5:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * 3.5
+                    elif cpuPokemonOneAdj[52] == 6:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * 4
+                    elif cpuPokemonOneAdj[52] == -1:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * .67
+                    elif cpuPokemonOneAdj[52] == -2:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * .5
+                    elif cpuPokemonOneAdj[52] == -3:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * .4
+                    elif cpuPokemonOneAdj[52] == -4:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * .33
+                    elif cpuPokemonOneAdj[52] == -5:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * .29
+                    elif cpuPokemonOneAdj[52] == -6:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * .25
+                    elif cpuPokemonOneAdj[52] == 0:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * 1
+        elif cpuPokemon[27] == 6:
+            if damage > 0:
+                print(cpuPokemonOne[1] + " was hit with recoil.")
+                cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] - (damage/3)
+                num = random.randint(1,100)
+                if num > 89:
+                    if userPokemonOneBinaries[1] == False and userPokemonOneBinaries[8] == False:
+                        print("Your " + cpuPokemonOne[1] + " was burned.")
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                        userPokemonOneBinaries[1] = True
+                        userPokemonOneBinaries[8] = True
+                        userPokemonOneBinaries[0] = True
+        elif cpuPokemon[27] == 7:
+            if afterEffect == True:
+                return
+            if cpuPokemonOneBinaries[7] == True:
+                print("Leech seed was removed from the field.")
+                cpuPokemonOneBinaries[7] = False
+                time.sleep(1)
+                clearscreen()
+                asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                statsDisplay(userPokemonOne, cpuPokemonOne)
+                hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+        elif cpuPokemon[27] == 8:
+            if afterEffect == True:
+                return
+            else:
+                num = random.randint(1,100)
+                if num > 69:
+                    if userPokemonOneBinaries[1] == False and userPokemonOneBinaries[8] == False:
+                        print("Your " + cpuPokemonOne[1] + " was burned.")
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                        userPokemonOneBinaries[1] = True
+                        userPokemonOneBinaries[8] = True
+                        userPokemonOneBinaries[0] = True
 
     elif move == 3:
         if cpuPokemon[36] == 0:
@@ -1023,17 +1935,34 @@ def cpuSpecialAbilities(move, cpuPokemon, effect):
                     userPokemonOneBinaries[0] = True
                     userPokemonOneBinaries[7] = True
                     print("Your " + userPokemonOne[1] + " was seeded.")
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 else:
                     print("Your " + userPokemonOne[1] + " was already seeded.")
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
         elif cpuPokemon[36] == 2:
             if afterEffect == True:
                 return
             else:
                 num = random.randint(1,100)
                 if num > 69:
-                    if userPokemonOneBinaries[2] == False:
+                    if userPokemonOneBinaries[2] == False and userPokemonOneBinaries[8] == False:
                         print("Your " + userPokemonOne[1] + " was poisoned.")
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                         userPokemonOneBinaries[2] = True
+                        userPokemonOneBinaries[8] = True
+                        userPokemonOneBinaries[0] = True
         elif cpuPokemon[36] == 3:
             if afterEffect == True:
                 return
@@ -1045,12 +1974,142 @@ def cpuSpecialAbilities(move, cpuPokemon, effect):
                 else:
                     cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] + (cpuPokemonOne[2] * (1/2))
                 print("The opposing " + cpuPokemon[1] + " was healed.")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                statsDisplay(userPokemonOne, cpuPokemonOne)
+                hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 if cpuPokemonOneAdj[2] > cpuPokemonOne[2]:
-                    cpuPokemonOneAdj[2] = cpuPokemonOne[2]
+                    cpuPokemonOneAdj[2] = copy.deepcopy(cpuPokemonOne[2])
         elif cpuPokemon[36] == 4:
             num = random.randint(30,70)
             cpuPokemonOneAdj[32] = num
-
+        elif cpuPokemon[36] == 5:
+            if afterEffect == True:
+                return
+            else:
+                cpuPokemonOneAdj[48] += 1
+                cpuPokemonOneAdj[52] += 1
+                if cpuPokemon[48] > 6:
+                    print(cpuPokemonOne[1] + "'s attack stat cannot go any higher.")
+                    time.sleep(1.2)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                    cpuPokemonOneAdj[48] = 6
+                else:
+                    print(cpuPokemonOne[1] + "'s attack was raised.")
+                    if cpuPokemonOneAdj[48] == 1:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * 1.5
+                    elif cpuPokemonOneAdj[48] == 2:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * 2
+                    elif cpuPokemonOneAdj[48] == 3:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * 2.5
+                    elif cpuPokemonOneAdj[48] == 4:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * 3
+                    elif cpuPokemonOneAdj[48] == 5:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * 3.5
+                    elif cpuPokemonOneAdj[48] == 6:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * 4
+                    elif cpuPokemonOneAdj[48] == -1:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * .67
+                    elif cpuPokemonOneAdj[48] == -2:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * .5
+                    elif cpuPokemonOneAdj[48] == -3:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * .4
+                    elif cpuPokemonOneAdj[48] == -4:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * .33
+                    elif cpuPokemonOneAdj[48] == -5:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * .29
+                    elif cpuPokemonOneAdj[48] == -6:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * .25
+                    elif cpuPokemonOneAdj[48] == 0:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * 1
+                if cpuPokemon[52] > 6:
+                    print(cpuPokemonOne[1] + "'s speed stat cannot go any higher.")
+                    time.sleep(1.2)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                    cpuPokemonOneAdj[52] = 6
+                else:
+                    print(cpuPokemonOne[1] + "'s speed was raised.")
+                    time.sleep(1.2)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                    if cpuPokemonOneAdj[52] == 1:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * 1.5
+                    elif cpuPokemonOneAdj[52] == 2:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * 2
+                    elif cpuPokemonOneAdj[52] == 3:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * 2.5
+                    elif cpuPokemonOneAdj[52] == 4:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * 3
+                    elif cpuPokemonOneAdj[52] == 5:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * 3.5
+                    elif cpuPokemonOneAdj[52] == 6:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * 4
+                    elif cpuPokemonOneAdj[52] == -1:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * .67
+                    elif cpuPokemonOneAdj[52] == -2:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * .5
+                    elif cpuPokemonOneAdj[52] == -3:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * .4
+                    elif cpuPokemonOneAdj[52] == -4:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * .33
+                    elif cpuPokemonOneAdj[52] == -5:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * .29
+                    elif cpuPokemonOneAdj[52] == -6:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * .25
+                    elif cpuPokemonOneAdj[52] == 0:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * 1
+        elif cpuPokemon[36] == 6:
+            if damage > 0:
+                print(cpuPokemonOne[1] + " was hit with recoil.")
+                cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] - (damage/3)
+                num = random.randint(1,100)
+                if num > 89:
+                    if userPokemonOneBinaries[1] == False and userPokemonOneBinaries[8] == False:
+                        print("Your " + cpuPokemonOne[1] + " was burned.")
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                        userPokemonOneBinaries[1] = True
+                        userPokemonOneBinaries[8] = True
+                        userPokemonOneBinaries[0] = True
+        elif cpuPokemon[36] == 7:
+            if afterEffect == True:
+                return
+            if cpuPokemonOneBinaries[7] == True:
+                print("Leech seed was removed from the field.")
+                cpuPokemonOneBinaries[7] = False
+                time.sleep(1)
+                clearscreen()
+                asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                statsDisplay(userPokemonOne, cpuPokemonOne)
+                hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+        elif cpuPokemon[36] == 8:
+            if afterEffect == True:
+                return
+            else:
+                num = random.randint(1,100)
+                if num > 69:
+                    if userPokemonOneBinaries[1] == False and userPokemonOneBinaries[8] == False:
+                        print("Your " + cpuPokemonOne[1] + " was burned.")
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                        userPokemonOneBinaries[1] = True
+                        userPokemonOneBinaries[8] = True
+                        userPokemonOneBinaries[0] = True
 
     elif move == 4:
         if cpuPokemon[45] == 0:
@@ -1063,17 +2122,34 @@ def cpuSpecialAbilities(move, cpuPokemon, effect):
                     userPokemonOneBinaries[0] = True
                     userPokemonOneBinaries[7] = True
                     print("Your " + userPokemonOne[1] + " was seeded.")
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 else:
                     print("Your " + userPokemonOne[1] + " was already seeded.")
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
         elif cpuPokemon[45] == 2:
             if afterEffect == True:
                 return
             else:
                 num = random.randint(1,100)
                 if num > 69:
-                    if userPokemonOneBinaries[2] == False:
+                    if userPokemonOneBinaries[2] == False and userPokemonOneBinaries[8] == False:
                         print("Your " + userPokemonOne[1] + " was poisoned.")
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                         userPokemonOneBinaries[2] = True
+                        userPokemonOneBinaries[8] = True
+                        userPokemonOneBinaries[0] = True
         elif cpuPokemon[45] == 3:
             if afterEffect == True:
                 return
@@ -1085,11 +2161,143 @@ def cpuSpecialAbilities(move, cpuPokemon, effect):
                 else:
                     cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] + (cpuPokemonOne[2] * (1/2))
                 print("The opposing " + cpuPokemon[1] + " was healed.")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                statsDisplay(userPokemonOne, cpuPokemonOne)
+                hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 if cpuPokemonOneAdj[2] > cpuPokemonOne[2]:
-                    cpuPokemonOneAdj[2] = cpuPokemonOne[2]
+                    cpuPokemonOneAdj[2] = copy.deepcopy(cpuPokemonOne[2])
         elif cpuPokemon[45] == 4:
             num = random.randint(30,70)
             cpuPokemonOneAdj[41] = num
+        elif cpuPokemon[45] == 5:
+            if afterEffect == True:
+                return
+            else:
+                cpuPokemonOneAdj[48] += 1
+                cpuPokemonOneAdj[52] += 1
+                if cpuPokemon[48] > 6:
+                    print(cpuPokemonOne[1] + "'s attack stat cannot go any higher.")
+                    time.sleep(1.2)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                    cpuPokemonOneAdj[48] = 6
+                else:
+                    print(cpuPokemonOne[1] + "'s attack was raised.")
+                    if cpuPokemonOneAdj[48] == 1:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * 1.5
+                    elif cpuPokemonOneAdj[48] == 2:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * 2
+                    elif cpuPokemonOneAdj[48] == 3:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * 2.5
+                    elif cpuPokemonOneAdj[48] == 4:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * 3
+                    elif cpuPokemonOneAdj[48] == 5:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * 3.5
+                    elif cpuPokemonOneAdj[48] == 6:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * 4
+                    elif cpuPokemonOneAdj[48] == -1:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * .67
+                    elif cpuPokemonOneAdj[48] == -2:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * .5
+                    elif cpuPokemonOneAdj[48] == -3:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * .4
+                    elif cpuPokemonOneAdj[48] == -4:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * .33
+                    elif cpuPokemonOneAdj[48] == -5:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * .29
+                    elif cpuPokemonOneAdj[48] == -6:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * .25
+                    elif cpuPokemonOneAdj[48] == 0:
+                        cpuPokemonOneAdj[3] = cpuPokemonOne[3] * 1
+                if cpuPokemon[52] > 6:
+                    print(cpuPokemonOne[1] + "'s speed stat cannot go any higher.")
+                    time.sleep(1.2)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                    cpuPokemonOneAdj[52] = 6
+                else:
+                    print(cpuPokemonOne[1] + "'s speed was raised.")
+                    time.sleep(1.2)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                    if cpuPokemonOneAdj[52] == 1:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * 1.5
+                    elif cpuPokemonOneAdj[52] == 2:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * 2
+                    elif cpuPokemonOneAdj[52] == 3:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * 2.5
+                    elif cpuPokemonOneAdj[52] == 4:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * 3
+                    elif cpuPokemonOneAdj[52] == 5:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * 3.5
+                    elif cpuPokemonOneAdj[52] == 6:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * 4
+                    elif cpuPokemonOneAdj[52] == -1:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * .67
+                    elif cpuPokemonOneAdj[52] == -2:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * .5
+                    elif cpuPokemonOneAdj[52] == -3:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * .4
+                    elif cpuPokemonOneAdj[52] == -4:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * .33
+                    elif cpuPokemonOneAdj[52] == -5:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * .29
+                    elif cpuPokemonOneAdj[52] == -6:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * .25
+                    elif cpuPokemonOneAdj[52] == 0:
+                        cpuPokemonOneAdj[7] = cpuPokemonOne[3] * 1
+        elif cpuPokemon[45] == 6:
+            if damage > 0:
+                print(cpuPokemonOne[1] + " was hit with recoil.")
+                cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] - (damage/3)
+                num = random.randint(1,100)
+                if num > 89:
+                    if userPokemonOneBinaries[1] == False and userPokemonOneBinaries[8] == False:
+                        print("Your " + cpuPokemonOne[1] + " was burned.")
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                        userPokemonOneBinaries[1] = True
+                        userPokemonOneBinaries[8] = True
+                        userPokemonOneBinaries[0] = True
+        elif cpuPokemon[45] == 7:
+            if afterEffect == True:
+                return
+            if cpuPokemonOneBinaries[7] == True:
+                print("Leech seed was removed from the field.")
+                cpuPokemonOneBinaries[7] = False
+                time.sleep(1)
+                clearscreen()
+                asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                statsDisplay(userPokemonOne, cpuPokemonOne)
+                hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+        elif cpuPokemon[45] == 8:
+            if afterEffect == True:
+                return
+            else:
+                num = random.randint(1,100)
+                if num > 69:
+                    if userPokemonOneBinaries[1] == False and userPokemonOneBinaries[8] == False:
+                        print("Your " + cpuPokemonOne[1] + " was burned.")
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+                        userPokemonOneBinaries[1] = True
+                        userPokemonOneBinaries[8] = True
+                        userPokemonOneBinaries[0] = True
+
 
 
 def speedCalc(user, userAdj, cpu, cpuAdj):
@@ -1128,43 +2336,433 @@ def accuracyCalc(attacker, attackerAdj, defender, defenderAdj, move):
             hit = True
     return hit
 
-def moveEffectivenessPrint(attacker, defender, move):
-    if move == 1:
-        effectiveOut = typeCalc(attacker[12], defender[8], defender[9])
-        if effectiveOut > 1:
-            print("It was super effective")
-        elif effectiveOut < 1:
-            print("It wasn't very effective")
-        else:
-            print(attacker[10] + " hit the opposing " + defender[1])
-    elif move == 2:
-        effectiveOut = typeCalc(attacker[21], defender[8], defender[9])
-        if effectiveOut > 1:
-            print("It was super effective")
-        elif effectiveOut < 1:
-            print("It wasn't very effective")
-        else:
-            print(attacker[19] + " hit the opposing " + defender[1])
-    elif move == 3:
-        effectiveOut = typeCalc(attacker[30], defender[8], defender[9])
-        if effectiveOut > 1:
-            print("It was super effective")
-        elif effectiveOut < 1:
-            print("It wasn't very effective")
-        else:
-            print(attacker[28] + " hit the opposing " + defender[1])
-    elif move == 4:
-        effectiveOut = typeCalc(attacker[39], defender[8], defender[9])
-        if effectiveOut > 1:
-            print("It was super effective")
-        elif effectiveOut < 1:
-            print("It wasn't very effective")
-        else:
-            print(attacker[37] + " hit the opposing " + defender[1])
+def moveEffectivenessPrint(attacker, defender, attackerAdj, defenderAdj, move, userBol):
+    
+    
+    
+    if userBol == True:
+        if move == 1:
+            effectiveOut = typeCalc(attacker[12], defender[8], defender[9])
+            if effectiveOut > 1:
+                print("It was super effective")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(attacker[0], defender[0])
+                statsDisplay(attacker, defender)
+                hpDisplay(attacker, attackerAdj, defender, defenderAdj)
+            elif effectiveOut == 0:
+                print("It had no effect.")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(attacker[0], defender[0])
+                statsDisplay(attacker, defender)
+                hpDisplay(attacker, attackerAdj, defender, defenderAdj)
+            elif effectiveOut < 1:
+                print("It wasn't very effective")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(attacker[0], defender[0])
+                statsDisplay(attacker, defender)
+                hpDisplay(attacker, attackerAdj, defender, defenderAdj)
+            else:
+                print(attacker[10] + " hit the opposing " + defender[1])
+                time.sleep(1)
+                clearscreen()
+                asciiRead(attacker[0], defender[0])
+                statsDisplay(attacker, defender)
+                hpDisplay(attacker, attackerAdj, defender, defenderAdj)
+        elif move == 2:
+            effectiveOut = typeCalc(attacker[21], defender[8], defender[9])
+            if effectiveOut > 1:
+                print("It was super effective")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(attacker[0], defender[0])
+                statsDisplay(attacker, defender)
+                hpDisplay(attacker, attackerAdj, defender, defenderAdj)
+            elif effectiveOut == 0:
+                print("It had no effect.")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(attacker[0], defender[0])
+                statsDisplay(attacker, defender)
+                hpDisplay(attacker, attackerAdj, defender, defenderAdj)
+            elif effectiveOut < 1:
+                print("It wasn't very effective")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(attacker[0], defender[0])
+                statsDisplay(attacker, defender)
+                hpDisplay(attacker, attackerAdj, defender, defenderAdj)
+            else:
+                print(attacker[19] + " hit the opposing " + defender[1])
+                time.sleep(1)
+                clearscreen()
+                asciiRead(attacker[0], defender[0])
+                statsDisplay(attacker, defender)
+                hpDisplay(attacker, attackerAdj, defender, defenderAdj)
+        elif move == 3:
+            effectiveOut = typeCalc(attacker[30], defender[8], defender[9])
+            if effectiveOut > 1:
+                print("It was super effective")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(attacker[0], defender[0])
+                statsDisplay(attacker, defender)
+                hpDisplay(attacker, attackerAdj, defender, defenderAdj)
+            elif effectiveOut == 0:
+                print("It had no effect.")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(attacker[0], defender[0])
+                statsDisplay(attacker, defender)
+                hpDisplay(attacker, attackerAdj, defender, defenderAdj)
+            elif effectiveOut < 1:
+                print("It wasn't very effective")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(attacker[0], defender[0])
+                statsDisplay(attacker, defender)
+                hpDisplay(attacker, attackerAdj, defender, defenderAdj)
+            else:
+                print(attacker[28] + " hit the opposing " + defender[1])
+                time.sleep(1)
+                clearscreen()
+                asciiRead(attacker[0], defender[0])
+                statsDisplay(attacker, defender)
+                hpDisplay(attacker, attackerAdj, defender, defenderAdj)
+        elif move == 4:
+            effectiveOut = typeCalc(attacker[39], defender[8], defender[9])
+            if effectiveOut > 1:
+                print("It was super effective")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(attacker[0], defender[0])
+                statsDisplay(attacker, defender)
+                hpDisplay(attacker, attackerAdj, defender, defenderAdj)
+            elif effectiveOut == 0:
+                print("It had no effect.")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(attacker[0], defender[0])
+                statsDisplay(attacker, defender)
+                hpDisplay(attacker, attackerAdj, defender, defenderAdj)
+            elif effectiveOut < 1:
+                print("It wasn't very effective")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(attacker[0], defender[0])
+                statsDisplay(attacker, defender)
+                hpDisplay(attacker, attackerAdj, defender, defenderAdj)
+            else:
+                print(attacker[37] + " hit the opposing " + defender[1])
+                time.sleep(1)
+                clearscreen()
+                asciiRead(attacker[0], defender[0])
+                statsDisplay(attacker, defender)
+                hpDisplay(attacker, attackerAdj, defender, defenderAdj)
+    else:
+        if move == 1:
+            effectiveOut = typeCalc(attacker[12], defender[8], defender[9])
+            if effectiveOut > 1:
+                print("It was super effective")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(defender[0], attacker[0])
+                statsDisplay(defender, attacker)
+                hpDisplay(defender, defenderAdj, attacker, attackerAdj)
+            elif effectiveOut == 0:
+                print("It had no effect.")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(attacker[0], defender[0])
+                statsDisplay(attacker, defender)
+                hpDisplay(attacker, attackerAdj, defender, defenderAdj)
+            elif effectiveOut < 1:
+                print("It wasn't very effective")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(defender[0], attacker[0])
+                statsDisplay(defender, attacker)
+                hpDisplay(defender, defenderAdj, attacker, attackerAdj)
+            else:
+                print(attacker[10] + " hit the opposing " + defender[1])
+                time.sleep(1)
+                clearscreen()
+                asciiRead(defender[0], attacker[0])
+                statsDisplay(defender, attacker)
+                hpDisplay(defender, defenderAdj, attacker, attackerAdj)
+        elif move == 2:
+            effectiveOut = typeCalc(attacker[21], defender[8], defender[9])
+            if effectiveOut > 1:
+                print("It was super effective")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(defender[0], attacker[0])
+                statsDisplay(defender, attacker)
+                hpDisplay(defender, defenderAdj, attacker, attackerAdj)
+            elif effectiveOut == 0:
+                print("It had no effect.")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(attacker[0], defender[0])
+                statsDisplay(attacker, defender)
+                hpDisplay(attacker, attackerAdj, defender, defenderAdj)
+            elif effectiveOut < 1:
+                print("It wasn't very effective")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(defender[0], attacker[0])
+                statsDisplay(defender, attacker)
+                hpDisplay(defender, defenderAdj, attacker, attackerAdj)
+            else:
+                print(attacker[19] + " hit the opposing " + defender[1])
+                time.sleep(1)
+                clearscreen()
+                asciiRead(defender[0], attacker[0])
+                statsDisplay(defender, attacker)
+                hpDisplay(defender, defenderAdj, attacker, attackerAdj)
+        elif move == 3:
+            effectiveOut = typeCalc(attacker[30], defender[8], defender[9])
+            time.sleep(5)
+            if effectiveOut > 1:
+                print("It was super effective")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(defender[0], attacker[0])
+                statsDisplay(defender, attacker)
+                hpDisplay(defender, defenderAdj, attacker, attackerAdj)
+            elif effectiveOut == 0:
+                print("It had no effect.")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(attacker[0], defender[0])
+                statsDisplay(attacker, defender)
+                hpDisplay(attacker, attackerAdj, defender, defenderAdj)
+            elif effectiveOut < 1:
+                print("It wasn't very effective")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(defender[0], attacker[0])
+                statsDisplay(defender, attacker)
+                hpDisplay(defender, defenderAdj, attacker, attackerAdj)
+            else:
+                print(attacker[28] + " hit the opposing " + defender[1])
+                time.sleep(1)
+                clearscreen()
+                asciiRead(defender[0], attacker[0])
+                statsDisplay(defender, attacker)
+                hpDisplay(defender, defenderAdj, attacker, attackerAdj)
+        elif move == 4:
+            effectiveOut = typeCalc(attacker[39], defender[8], defender[9])
+            if effectiveOut > 1:
+                print("It was super effective")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(defender[0], attacker[0])
+                statsDisplay(defender, attacker)
+                hpDisplay(defender, defenderAdj, attacker, attackerAdj)
+            elif effectiveOut == 0:
+                print("It had no effect.")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(attacker[0], defender[0])
+                statsDisplay(attacker, defender)
+                hpDisplay(attacker, attackerAdj, defender, defenderAdj)
+            elif effectiveOut < 1:
+                print("It wasn't very effective")
+                time.sleep(1)
+                clearscreen()
+                asciiRead(defender[0], attacker[0])
+                statsDisplay(defender, attacker)
+                hpDisplay(defender, defenderAdj, attacker, attackerAdj)
+            else:
+                print(attacker[37] + " hit the opposing " + defender[1])
+                time.sleep(1)
+                clearscreen()
+                asciiRead(defender[0], attacker[0])
+                statsDisplay(defender, attacker)
+                hpDisplay(defender, defenderAdj, attacker, attackerAdj)
+
     
     
 def cpuMoveChooser():
     return random.randint(1,4)
+
+def EndOfTurnEffects(faster):
+    global userFieldBinaries
+    global cpuFieldBinaries
+    global weatherBinaries
+    global userPokemonOneBinaries
+    global cpuPokemonOneBinaries
+
+    global userPokemonOne
+    global cpuPokemonOne
+    global userPokemonOneAdj
+    global cpuPokemonOneAdj
+    global cpuPokemonOnePoisonTurns
+    global userPokemonOnePoisonTurns
+
+    if faster == 1:
+        if userPokemonOneBinaries[1] == True:
+            damage = math.floor(userPokemonOne[2] / 16)
+            userPokemonOneAdj[2] = userPokemonOneAdj[2] - damage
+            print("Your " + userPokemonOne[1] + " was hurt by burn.")
+            time.sleep(1.2)
+            clearscreen()
+            asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+            statsDisplay(userPokemonOne, cpuPokemonOne)
+            hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+        elif userPokemonOneBinaries[2] == True:
+            damage = math.floor((userPokemonOne[2] * userPokemonOnePoisonTurns) / 16)
+            userPokemonOnePoisonTurns += 1
+            userPokemonOneAdj[2] = userPokemonOneAdj[2] - damage
+            print("Your " + userPokemonOne[1] + " was hurt by poison.")
+            time.sleep(1.2)
+            clearscreen()
+            asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+            statsDisplay(userPokemonOne, cpuPokemonOne)
+            hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+        if userPokemonOneBinaries[7] == True:
+            damage = math.floor(userPokemonOne[2] / 8)
+            userPokemonOneAdj[2] = userPokemonOneAdj[2] - damage
+            cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] + damage
+            if cpuPokemonOneAdj[2] > cpuPokemonOne[2]:
+                cpuPokemonOneAdj[2] = copy.deepcopy(cpuPokemonOne[2])
+            print("Your " + userPokemonOne[1] + "'s health was sapped by leech seed.")
+            time.sleep(1.2)
+            clearscreen()
+            asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+            statsDisplay(userPokemonOne, cpuPokemonOne)
+            hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+
+        if userPokemonOneAdj[2] < 1 or cpuPokemonOneAdj[2] < 1:
+            return
+        
+        if cpuPokemonOneBinaries[1] == True:
+            damage = math.floor(cpuPokemonOne[2] / 16)
+            cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] - damage
+            print("The opposing " + cpuPokemonOne[1] + " was hurt by burn.")
+            time.sleep(1.2)
+            clearscreen()
+            asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+            statsDisplay(userPokemonOne, cpuPokemonOne)
+            hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+        elif cpuPokemonOneBinaries[2] == True:
+            damage = math.floor((cpuPokemonOne[2] * cpuPokemonOnePoisonTurns) / 16)
+            cpuPokemonOnePoisonTurns += 1
+            cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] - damage
+            print("The opposing " + cpuPokemonOne[1] + " was hurt by poison.")
+            time.sleep(1.2)
+            clearscreen()
+            asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+            statsDisplay(userPokemonOne, cpuPokemonOne)
+            hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+        if cpuPokemonOneBinaries[7] == True:
+            damage = math.floor(cpuPokemonOne[2] / 8)
+            cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] - damage
+            userPokemonOneAdj[2] = userPokemonOneAdj[2] + damage
+            if userPokemonOneAdj[2] > userPokemonOne[2]:
+                userPokemonOneAdj[2] = copy.deepcopy(userPokemonOne[2])
+            print("The Opposing " + cpuPokemonOne[1] + "'s health was sapped by leech seed.")
+            time.sleep(1.2)
+            clearscreen()
+            asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+            statsDisplay(userPokemonOne, cpuPokemonOne)
+            hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+    else:
+        if cpuPokemonOneBinaries[1] == True:
+            damage = math.floor(cpuPokemonOne[2] / 16)
+            cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] - damage
+            print("The opposing " + cpuPokemonOne[1] + " was hurt by burn.")
+            time.sleep(1.2)
+            clearscreen()
+            asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+            statsDisplay(userPokemonOne, cpuPokemonOne)
+            hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+        elif cpuPokemonOneBinaries[2] == True:
+            damage = math.floor((cpuPokemonOne[2] * cpuPokemonOnePoisonTurns) / 16)
+            cpuPokemonOnePoisonTurns += 1
+            cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] - damage
+            print("The opposing " + cpuPokemonOne[1] + " was hurt by poison.")
+            time.sleep(1.2)
+            clearscreen()
+            asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+            statsDisplay(userPokemonOne, cpuPokemonOne)
+            hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+        if cpuPokemonOneBinaries[7] == True:
+            damage = math.floor(cpuPokemonOne[2] / 8)
+            cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] - damage
+            userPokemonOneAdj[2] = userPokemonOneAdj[2] + damage
+            if userPokemonOneAdj[2] > userPokemonOne[2]:
+                userPokemonOneAdj[2] = copy.deepcopy(userPokemonOne[2])
+            print("The Opposing " + cpuPokemonOne[1] + "'s health was sapped by leech seed.")
+            time.sleep(1.2)
+            clearscreen()
+            asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+            statsDisplay(userPokemonOne, cpuPokemonOne)
+            hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+
+        if userPokemonOneAdj[2] < 1 or cpuPokemonOneAdj[2] < 1:
+            return
+
+
+        if userPokemonOneBinaries[1] == True:
+            damage = math.floor(userPokemonOne[2] / 16)
+            userPokemonOneAdj[2] = userPokemonOneAdj[2] - damage
+            print("Your " + userPokemonOne[1] + " was hurt by burn.")
+            time.sleep(1.2)
+            clearscreen()
+            asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+            statsDisplay(userPokemonOne, cpuPokemonOne)
+            hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+        elif userPokemonOneBinaries[2] == True:
+            damage = math.floor((userPokemonOne[2] * userPokemonOnePoisonTurns) / 16)
+            userPokemonOnePoisonTurns += 1
+            userPokemonOneAdj[2] = userPokemonOneAdj[2] - damage
+            print("Your " + userPokemonOne[1] + " was hurt by poison.")
+            time.sleep(1.2)
+            clearscreen()
+            asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+            statsDisplay(userPokemonOne, cpuPokemonOne)
+            hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+        if userPokemonOneBinaries[7] == True:
+            damage = math.floor(userPokemonOne[2] / 8)
+            userPokemonOneAdj[2] = userPokemonOneAdj[2] - damage
+            cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] + damage
+            if cpuPokemonOneAdj[2] > cpuPokemonOne[2]:
+                cpuPokemonOneAdj[2] = copy.deepcopy(cpuPokemonOne[2])
+            print("Your " + userPokemonOne[1] + "'s health was sapped by leech seed.")
+            time.sleep(1.2)
+            clearscreen()
+            asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+            statsDisplay(userPokemonOne, cpuPokemonOne)
+            hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+        
+      
+def winLoseScreen(user, cpu):
+    if cpu[2] < 1:
+        clearscreen()
+        print( """
+ __     __            __          __ _         _ 
+ \ \   / /            \ \        / /(_)       | |
+  \ \_/ /___   _   _   \ \  /\  / /  _  _ __  | |
+   \   // _ \ | | | |   \ \/  \/ /  | || '_ \ | |
+    | || (_) || |_| |    \  /\  /   | || | | ||_|
+    |_| \___/  \__,_|     \/  \/    |_||_| |_|(_)
+    """)
+    elif user[2] < 1:
+        clearscreen()
+        print("""
+ __     __             _                        _ 
+ \ \   / /            | |                      | |
+  \ \_/ /___   _   _  | |      ___   ___   ___ | |
+   \   // _ \ | | | | | |     / _ \ / __| / _ \| |
+    | || (_) || |_| | | |____| (_) |\__ \|  __/|_|
+    |_| \___/  \__,_| |______|\___/ |___/ \___|(_)
+    """)
+
+    
 
 
 def main():
@@ -1178,6 +2776,8 @@ def main():
     global weatherBinaries
     global binariesTemplate
     global userPokemonOneBinaries
+    global userPokemonOnePoisonTurns
+    global cpuPokemonOnePoisonTurns
     global cpuPokemonOneBinaries
     global userPokemonOne
     global userPokemonOneAdj
@@ -1192,25 +2792,28 @@ def main():
     cpuFieldBinaries = [False, False, False, False]
     #Weather Condition, Sunny, Raining
     weatherBinaries = [False, False, False]
-    #Status Condition, Burn, Poison, Paralyze, Freeze, Sleep, Confusion, Leech Seeded
-    binariesTemplate = [False, False, False, False, False, False ,False, False]
-    userPokemonOneBinaries = binariesTemplate
-    cpuPokemonOneBinaries = binariesTemplate
+    #Status Condition, Burn, Poison, Paralyze, Freeze, Sleep, Confusion, Leech Seeded, OneOnlyStatusCondition(Burn/Poison/Paralyze, Freeze, and sleep can only be applied 1 at a time this determines that)
+    binariesTemplate = [False, False, False, False, False, False ,False, False, False]
+    userPokemonOneBinaries = copy.deepcopy(binariesTemplate)
+    cpuPokemonOneBinaries = copy.deepcopy(binariesTemplate)
+    userPokemonOnePoisonTurns = 1
+    cpuPokemonOnePoisonTurns = 1
 
 
 
     while True:
         print("Choose a pokemon to battle with")
         print("1. Venusaur")
+        print("2. Charizard")
+        print("3. Blastoise")
         choice = input("Choice: ")
-        if choice.isdigit() and int(choice) in range(1, 2):
+        if choice.isdigit() and int(choice) in range(1, 4):
             choice = int(choice)
             break
         else:
             print("Invalid Choice")
             time.sleep(1.4)
             clearscreen()
-    clearscreen()
     userPokemonOne = StatDB(choice)
     userPokemonOneAdj = copy.deepcopy(userPokemonOne)
     cpuPokemonOne = CPUChoice()
@@ -1218,379 +2821,564 @@ def main():
 
 
     while userPokemonOneAdj[2] > 0 and cpuPokemonOneAdj[2] > 0:
+        damage = 0
+        clearscreen()
         asciiRead(userPokemonOne[0],cpuPokemonOne[0])
         statsDisplay(userPokemonOne, cpuPokemonOne)
         hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
         moveDisplay(userPokemonOneAdj)
         moveChoice = moveChoose(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
+        clearscreen()
+        asciiRead(userPokemonOne[0],cpuPokemonOne[0])
+        statsDisplay(userPokemonOne, cpuPokemonOne)
+        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
         cpuMove = cpuMoveChooser()
         fastest = speedCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
         #Fastest 1 = User, 2 = Cpu
         if fastest == 1:
             #User Attack
-            if moveChoice == 1:
+            if moveChoice == 1 and userPokemonOneAdj[2] > 0:
                 if userPokemonOneAdj[13] == 1 or userPokemonOneAdj[13] == 2:
-                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True, damage)
                     print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[10] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
                     if moveAccuracy == True:
                         damage = int(fullDamageCalc(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice, userPokemonOne, cpuPokemonOne))
                         cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] - damage
-                        moveEffectivenessPrint(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice)
-                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False)
+                        moveEffectivenessPrint(userPokemonOne, cpuPokemonOne, userPokemonOneAdj, cpuPokemonOneAdj, moveChoice, True)
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False, damage)
                     else:
                         print(userPokemonOne[10] + " missed " + cpuPokemonOne[1] +".")
-                        time.sleep(.7)
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 else:
-                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True, damage)
                     print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[10] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
                     if moveAccuracy == True:
-                        time.sleep(.7)
-                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False)
-            elif moveChoice == 2:
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False, damage)
+            elif moveChoice == 2 and userPokemonOneAdj[2] > 0:
                 if userPokemonOneAdj[22] == 1 or userPokemonOneAdj[22] == 2:
-                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True, damage)
                     print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[19] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
                     if moveAccuracy == True:
                         damage = int(fullDamageCalc(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice, userPokemonOne, cpuPokemonOne))
                         cpuPokemonOneAdj[2] -=damage
-                        moveEffectivenessPrint(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice)
-                        time.sleep(.7)
-                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False)
+                        moveEffectivenessPrint(userPokemonOne, cpuPokemonOne, userPokemonOneAdj, cpuPokemonOneAdj, moveChoice, True)
+                        time.sleep(1)
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False, damage)
                     else:
                         print(userPokemonOne[19] + " missed " + cpuPokemonOne[1] +".")
-                        time.sleep(.7)
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 else:
-                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True, damage)
                     print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[19] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
                     if moveAccuracy == True:
-                        time.sleep(.7)
-                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False)
-            elif moveChoice == 3:
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False, damage)
+            elif moveChoice == 3 and userPokemonOneAdj[2] > 0:
                 if userPokemonOneAdj[31] == 1 or userPokemonOneAdj[31] == 2:
-                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True, damage)
                     print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[28] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
                     if moveAccuracy == True:
                         damage = int(fullDamageCalc(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice, userPokemonOne, cpuPokemonOne))
                         cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] - damage
-                        moveEffectivenessPrint(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice)
-                        time.sleep(.7)
-                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False)
+                        moveEffectivenessPrint(userPokemonOne, cpuPokemonOne, userPokemonOneAdj, cpuPokemonOneAdj, moveChoice, True)
+                        time.sleep(1)
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False, damage)
                     else:
                         print(userPokemonOne[28] + " missed " + cpuPokemonOne[1] +".")
-                        time.sleep(.7)
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 else:
-                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True, damage)
                     print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[28] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
                     if moveAccuracy == True:
-                        time.sleep(.7)
-                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False)
-            elif moveChoice == 4:
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False, damage)
+            elif moveChoice == 4 and userPokemonOneAdj[2] > 0:
                 if userPokemonOneAdj[40] == 1 or userPokemonOneAdj[40] == 2:
-                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True, damage)
                     print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[37] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
                     if moveAccuracy == True:
                         damage = int(fullDamageCalc(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice, userPokemonOne, cpuPokemonOne))
                         cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] - damage
-                        moveEffectivenessPrint(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice)
-                        time.sleep(.7)
-                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False)
+                        moveEffectivenessPrint(userPokemonOne, cpuPokemonOne, userPokemonOneAdj, cpuPokemonOneAdj, moveChoice, True)
+                        time.sleep(1)
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False, damage)
                     else:
                         print(userPokemonOne[37] + " missed " + cpuPokemonOne[1] +".")
-                        time.sleep(.7)
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 else:
-                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True, damage)
                     print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[37] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
                     if moveAccuracy == True:
-                        time.sleep(.7)
-                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False)
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False, damage)
 
-
+            damage =0
             #CPU Attack
-            if cpuMove == 1:
+            if cpuMove == 1 and cpuPokemonOneAdj[2] > 0:
                 if cpuPokemonOneAdj[13] == 1 or cpuPokemonOneAdj[13] == 2:
-                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True, damage)
                     print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[10] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
                     if moveAccuracy == True:
                         damage = int(fullDamageCalc(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, cpuPokemonOne, userPokemonOne))
                         userPokemonOneAdj[2] = userPokemonOneAdj[2] - damage
-                        moveEffectivenessPrint(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove)
-                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
+                        moveEffectivenessPrint(cpuPokemonOne, userPokemonOne, cpuPokemonOneAdj, userPokemonOneAdj, moveChoice, False)
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False, damage)
                     else:
                         print(cpuPokemonOne[10] + " missed your " + userPokemonOne[1] +".")
-                        time.sleep(.7)
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 else:
-                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True, damage)
                     print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[10] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
                     if moveAccuracy == True:
-                        time.sleep(.7)
-                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
-            elif cpuMove == 2:
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False, damage)
+            elif cpuMove == 2 and cpuPokemonOneAdj[2] > 0:
                 if cpuPokemonOneAdj[22] == 1 or cpuPokemonOneAdj[22] == 2:
-                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True, damage)
                     print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[19] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
                     if moveAccuracy == True:
                         damage = int(fullDamageCalc(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, cpuPokemonOne, userPokemonOne))
                         userPokemonOneAdj[2] = userPokemonOneAdj[2] - damage
-                        moveEffectivenessPrint(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove)
-                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
+                        moveEffectivenessPrint(cpuPokemonOne, userPokemonOne, cpuPokemonOneAdj, userPokemonOneAdj, moveChoice, False)
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False, damage)
                     else:
                         print(cpuPokemonOne[19] + " missed your " + userPokemonOne[1] +".")
-                        time.sleep(.7)
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 else:
-                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True, damage)
                     print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[19] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
                     if moveAccuracy == True:
-                        time.sleep(.7)
-                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
-            elif cpuMove == 3:
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False, damage)
+            elif cpuMove == 3 and cpuPokemonOneAdj[2] > 0:
                 if cpuPokemonOneAdj[31] == 1 or cpuPokemonOneAdj[31] == 2:
-                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True, damage)
                     print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[28] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
                     if moveAccuracy == True:
                         damage = int(fullDamageCalc(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, cpuPokemonOne, userPokemonOne))
                         userPokemonOneAdj[2] = userPokemonOneAdj[2] - damage
-                        moveEffectivenessPrint(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove)
-                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
+                        moveEffectivenessPrint(cpuPokemonOne, userPokemonOne, cpuPokemonOneAdj, userPokemonOneAdj, moveChoice, False)
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False, damage)
                     else:
                         print(cpuPokemonOne[28] + " missed your " + userPokemonOne[1] +".")
-                        time.sleep(.7)
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 else:
-                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True, damage)
                     print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[28] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
                     if moveAccuracy == True:
-                        time.sleep(.7)
-                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
-            elif cpuMove == 4:
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False, damage)
+            elif cpuMove == 4 and cpuPokemonOneAdj[2] > 0:
                 if cpuPokemonOneAdj[40] == 1 or cpuPokemonOneAdj[40] == 2:
-                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True, damage)
                     print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[37] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
                     if moveAccuracy == True:
                         damage = int(fullDamageCalc(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, cpuPokemonOne, userPokemonOne))
                         userPokemonOneAdj[2] = userPokemonOneAdj[2] - damage
-                        moveEffectivenessPrint(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove)
-                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
+                        moveEffectivenessPrint(cpuPokemonOne, userPokemonOne, cpuPokemonOneAdj, userPokemonOneAdj, moveChoice, False)
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False, damage)
                     else:
                         print(cpuPokemonOne[37] + " missed your " + userPokemonOne[1] +".")
-                        time.sleep(.7)
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 else:
-                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True, damage)
                     print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[37] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
                     if moveAccuracy == True:
-                        time.sleep(.7)
-                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False, damage)
         else:
             #CPU Attack
-            if cpuMove == 1:
+            if cpuMove == 1 and cpuPokemonOneAdj[2] > 0:
                 if cpuPokemonOneAdj[13] == 1 or cpuPokemonOneAdj[13] == 2:
-                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True, damage)
                     print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[10] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
                     if moveAccuracy == True:
                         damage = int(fullDamageCalc(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, cpuPokemonOne, userPokemonOne))
                         userPokemonOneAdj[2] = userPokemonOneAdj[2] - damage
-                        moveEffectivenessPrint(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove)
-                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
+                        moveEffectivenessPrint(cpuPokemonOne, userPokemonOne, cpuPokemonOneAdj, userPokemonOneAdj, moveChoice, False)
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False, damage)
                     else:
                         print(cpuPokemonOne[10] + " missed your " + userPokemonOne[1] +".")
-                        time.sleep(.7)
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 else:
-                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True, damage)
                     print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[10] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
                     if moveAccuracy == True:
-                        time.sleep(.7)
-                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
-            elif cpuMove == 2:
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False, damage)
+            elif cpuMove == 2 and cpuPokemonOneAdj[2] > 0:
                 if cpuPokemonOneAdj[22] == 1 or cpuPokemonOneAdj[22] == 2:
-                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True, damage)
                     print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[19] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
                     if moveAccuracy == True:
                         damage = int(fullDamageCalc(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, cpuPokemonOne, userPokemonOne))
                         userPokemonOneAdj[2] = userPokemonOneAdj[2] - damage
-                        moveEffectivenessPrint(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove)
-                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
+                        moveEffectivenessPrint(cpuPokemonOne, userPokemonOne, cpuPokemonOneAdj, userPokemonOneAdj, moveChoice, False)
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False, damage)
                     else:
                         print(cpuPokemonOne[19] + " missed your " + userPokemonOne[1] +".")
-                        time.sleep(.7)
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 else:
-                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True, damage)
                     print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[19] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
                     if moveAccuracy == True:
-                        time.sleep(.7)
-                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
-            elif cpuMove == 3:
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False, damage)
+            elif cpuMove == 3 and cpuPokemonOneAdj[2] > 0:
                 if cpuPokemonOneAdj[31] == 1 or cpuPokemonOneAdj[31] == 2:
-                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True, damage)
                     print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[28] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
                     if moveAccuracy == True:
                         damage = int(fullDamageCalc(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, cpuPokemonOne, userPokemonOne))
                         userPokemonOneAdj[2] = userPokemonOneAdj[2] - damage
-                        moveEffectivenessPrint(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove)
-                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
+                        moveEffectivenessPrint(cpuPokemonOne, userPokemonOne, cpuPokemonOneAdj, userPokemonOneAdj, moveChoice, False)
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False, damage)
                     else:
                         print(cpuPokemonOne[28] + " missed your " + userPokemonOne[1] +".")
-                        time.sleep(.7)
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 else:
-                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True, damage)
                     print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[28] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
                     if moveAccuracy == True:
-                        time.sleep(.7)
-                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
-            elif cpuMove == 4:
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False, damage)
+            elif cpuMove == 4 and cpuPokemonOneAdj[2] > 0:
                 if cpuPokemonOneAdj[40] == 1 or cpuPokemonOneAdj[40] == 2:
-                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True, damage)
                     print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[37] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
                     if moveAccuracy == True:
                         damage = int(fullDamageCalc(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, cpuPokemonOne, userPokemonOne))
                         userPokemonOneAdj[2] = userPokemonOneAdj[2] - damage
-                        moveEffectivenessPrint(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove)
-                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
+                        moveEffectivenessPrint(cpuPokemonOne, userPokemonOne, cpuPokemonOneAdj, userPokemonOneAdj, moveChoice, False)
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False, damage)
                     else:
                         print(cpuPokemonOne[37] + " missed your " + userPokemonOne[1] +".")
-                        time.sleep(.7)
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 else:
-                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True)
+                    cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, True, damage)
                     print(cpuPokemonOneAdj[1] + " used " + cpuPokemonOneAdj[37] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(cpuPokemonOne, cpuPokemonOneAdj, userPokemonOne, userPokemonOneAdj, cpuMove)
                     if moveAccuracy == True:
-                        time.sleep(.7)
-                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False)
+                        cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False, damage)
             #User Attack
-            if moveChoice == 1:
+            damage = 0
+            if moveChoice == 1 and userPokemonOneAdj[2] > 0:
                 if userPokemonOneAdj[13] == 1 or userPokemonOneAdj[13] == 2:
-                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True, damage)
                     print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[10] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
                     if moveAccuracy == True:
                         damage = int(fullDamageCalc(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice, userPokemonOne, cpuPokemonOne))
                         cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] - damage
-                        moveEffectivenessPrint(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice)
-                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False)
+                        moveEffectivenessPrint(userPokemonOne, cpuPokemonOne, userPokemonOneAdj, cpuPokemonOneAdj, moveChoice, True)
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False, damage)
                     else:
                         print(userPokemonOne[10] + " missed " + cpuPokemonOne[1] +".")
-                        time.sleep(.7)
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 else:
-                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True, damage)
                     print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[10] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
                     if moveAccuracy == True:
-                        time.sleep(.7)
-                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False)
-            elif moveChoice == 2:
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False, damage)
+            elif moveChoice == 2 and userPokemonOneAdj[2] > 0:
                 if userPokemonOneAdj[22] == 1 or userPokemonOneAdj[22] == 2:
-                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True, damage)
                     print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[19] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
                     if moveAccuracy == True:
                         damage = int(fullDamageCalc(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice, userPokemonOne, cpuPokemonOne))
                         cpuPokemonOneAdj[2] -=damage
-                        moveEffectivenessPrint(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice)
-                        time.sleep(.7)
-                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False)
+                        moveEffectivenessPrint(userPokemonOne, cpuPokemonOne, userPokemonOneAdj, cpuPokemonOneAdj, moveChoice, True)
+                        time.sleep(1)
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False, damage)
                     else:
                         print(userPokemonOne[19] + " missed " + cpuPokemonOne[1] +".")
-                        time.sleep(.7)
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 else:
-                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True, damage)
                     print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[19] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
                     if moveAccuracy == True:
-                        time.sleep(.7)
-                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False)
-            elif moveChoice == 3:
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False, damage)
+            elif moveChoice == 3 and userPokemonOneAdj[2] > 0:
                 if userPokemonOneAdj[31] == 1 or userPokemonOneAdj[31] == 2:
-                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True, damage)
                     print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[28] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
                     if moveAccuracy == True:
                         damage = int(fullDamageCalc(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice, userPokemonOne, cpuPokemonOne))
                         cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] - damage
-                        moveEffectivenessPrint(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice)
-                        time.sleep(.7)
-                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False)
+                        moveEffectivenessPrint(userPokemonOne, cpuPokemonOne, userPokemonOneAdj, cpuPokemonOneAdj, moveChoice, True)
+                        time.sleep(1)
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False, damage)
                     else:
                         print(userPokemonOne[28] + " missed " + cpuPokemonOne[1] +".")
-                        time.sleep(.7)
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 else:
-                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True, damage)
                     print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[28] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
                     if moveAccuracy == True:
-                        time.sleep(.7)
-                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False)
-            elif moveChoice == 4:
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False, damage)
+            elif moveChoice == 4 and userPokemonOneAdj[2] > 0:
                 if userPokemonOneAdj[40] == 1 or userPokemonOneAdj[40] == 2:
-                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True, damage)
                     print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[37] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
                     if moveAccuracy == True:
                         damage = int(fullDamageCalc(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice, userPokemonOne, cpuPokemonOne))
                         cpuPokemonOneAdj[2] = cpuPokemonOneAdj[2] - damage
-                        moveEffectivenessPrint(userPokemonOneAdj, cpuPokemonOneAdj, moveChoice)
-                        time.sleep(.7)
-                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False)
+                        moveEffectivenessPrint(userPokemonOne, cpuPokemonOne, userPokemonOneAdj, cpuPokemonOneAdj, moveChoice, True)
+                        time.sleep(1)
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False, damage)
                     else:
                         print(userPokemonOne[37] + " missed " + cpuPokemonOne[1] +".")
-                        time.sleep(.7)
+                        time.sleep(1)
+                        clearscreen()
+                        asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                        statsDisplay(userPokemonOne, cpuPokemonOne)
+                        hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                 else:
-                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True)
+                    userSpecialAbilities(moveChoice, userPokemonOneAdj, True, damage)
                     print(userPokemonOneAdj[1] + " used " + userPokemonOneAdj[37] + ".")
-                    time.sleep(.7)
+                    time.sleep(1)
+                    clearscreen()
+                    asciiRead(userPokemonOne[0], cpuPokemonOne[0])
+                    statsDisplay(userPokemonOne, cpuPokemonOne)
+                    hpDisplay(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj)
                     moveAccuracy = accuracyCalc(userPokemonOne, userPokemonOneAdj, cpuPokemonOne, cpuPokemonOneAdj, moveChoice)
                     if moveAccuracy == True:
-                        time.sleep(.7)
-                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False) 
+                        userSpecialAbilities(moveChoice, userPokemonOneAdj, False, damage) 
+        EndOfTurnEffects(fastest)
+        winLoseScreen(userPokemonOneAdj, cpuPokemonOneAdj)
 if __name__ == '__main__':
     main()

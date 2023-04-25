@@ -1,0 +1,53 @@
+1
+Charizard
+297
+236
+228
+192
+207
+328
+2
+4
+Dragon Dance
+The user vigorously performs a mystic, powerful dance that boosts its Attack and Speed stats.
+18
+3
+0
+5000
+0
+20
+5
+Flare Blitz
+The user cloaks itself in fire and charges the target. This also damages the user quite a lot. This may leave the target with a burn.
+2
+1
+120
+100
+0
+15
+6
+Earthquake
+The user sets off an earthquake that strikes those around it.
+9
+1
+100
+100
+0
+10
+0
+Thunder Punch
+The target is punched with an electrified fist. It may also leave the target with paralysis.
+5
+1
+75
+100
+0
+15
+7
+72
+31
+0
+0
+0
+0
+0

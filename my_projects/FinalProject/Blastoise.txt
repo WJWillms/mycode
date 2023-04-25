@@ -1,0 +1,53 @@
+2
+Blastoise
+299
+153
+269
+237
+246
+280
+3
+0
+Rapid Spin
+A spin attack that can also eliminate such moves as Bind, Wrap, Leech Seed, and Spikes
+8
+1
+50
+100
+0
+40
+7
+Dark Pulse
+The user releases a horrible aura imbued with dark thoughts.
+11
+2
+80
+100
+0
+15
+0
+Scald
+The user shoots boiling hot water at its target. This may also leave the target with a burn.
+3
+2
+80
+100
+0
+15
+8
+Ice Beam
+The target is struck with an icy-cold beam of energy
+16
+2
+90
+100
+0
+10
+9
+63
+36
+0
+0
+0
+0
+0
