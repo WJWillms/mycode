@@ -2988,7 +2988,7 @@ def main():
                     if moveAccuracy == True:
                         damage = int(fullDamageCalc(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, cpuPokemonOne, userPokemonOne))
                         userPokemonOneAdj[2] = userPokemonOneAdj[2] - damage
-                        moveEffectivenessPrint(cpuPokemonOne, userPokemonOne, cpuPokemonOneAdj, userPokemonOneAdj, moveChoice, False)
+                        moveEffectivenessPrint(cpuPokemonOne, userPokemonOne, cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, False)
                         cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False, damage)
                     else:
                         print(cpuPokemonOne[10] + " missed your " + userPokemonOne[1] +".")
@@ -3021,7 +3021,7 @@ def main():
                     if moveAccuracy == True:
                         damage = int(fullDamageCalc(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, cpuPokemonOne, userPokemonOne))
                         userPokemonOneAdj[2] = userPokemonOneAdj[2] - damage
-                        moveEffectivenessPrint(cpuPokemonOne, userPokemonOne, cpuPokemonOneAdj, userPokemonOneAdj, moveChoice, False)
+                        moveEffectivenessPrint(cpuPokemonOne, userPokemonOne, cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, False)
                         cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False, damage)
                     else:
                         print(cpuPokemonOne[19] + " missed your " + userPokemonOne[1] +".")
@@ -3054,7 +3054,7 @@ def main():
                     if moveAccuracy == True:
                         damage = int(fullDamageCalc(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, cpuPokemonOne, userPokemonOne))
                         userPokemonOneAdj[2] = userPokemonOneAdj[2] - damage
-                        moveEffectivenessPrint(cpuPokemonOne, userPokemonOne, cpuPokemonOneAdj, userPokemonOneAdj, moveChoice, False)
+                        moveEffectivenessPrint(cpuPokemonOne, userPokemonOne, cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, False)
                         cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False, damage)
                     else:
                         print(cpuPokemonOne[28] + " missed your " + userPokemonOne[1] +".")
@@ -3087,7 +3087,7 @@ def main():
                     if moveAccuracy == True:
                         damage = int(fullDamageCalc(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, cpuPokemonOne, userPokemonOne))
                         userPokemonOneAdj[2] = userPokemonOneAdj[2] - damage
-                        moveEffectivenessPrint(cpuPokemonOne, userPokemonOne, cpuPokemonOneAdj, userPokemonOneAdj, moveChoice, False)
+                        moveEffectivenessPrint(cpuPokemonOne, userPokemonOne, cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, False)
                         cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False, damage)
                     else:
                         print(cpuPokemonOne[37] + " missed your " + userPokemonOne[1] +".")
@@ -3122,7 +3122,7 @@ def main():
                     if moveAccuracy == True:
                         damage = int(fullDamageCalc(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, cpuPokemonOne, userPokemonOne))
                         userPokemonOneAdj[2] = userPokemonOneAdj[2] - damage
-                        moveEffectivenessPrint(cpuPokemonOne, userPokemonOne, cpuPokemonOneAdj, userPokemonOneAdj, moveChoice, False)
+                        moveEffectivenessPrint(cpuPokemonOne, userPokemonOne, cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, False)
                         cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False, damage)
                     else:
                         print(cpuPokemonOne[10] + " missed your " + userPokemonOne[1] +".")
@@ -3155,7 +3155,7 @@ def main():
                     if moveAccuracy == True:
                         damage = int(fullDamageCalc(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, cpuPokemonOne, userPokemonOne))
                         userPokemonOneAdj[2] = userPokemonOneAdj[2] - damage
-                        moveEffectivenessPrint(cpuPokemonOne, userPokemonOne, cpuPokemonOneAdj, userPokemonOneAdj, moveChoice, False)
+                        moveEffectivenessPrint(cpuPokemonOne, userPokemonOne, cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, False)
                         cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False, damage)
                     else:
                         print(cpuPokemonOne[19] + " missed your " + userPokemonOne[1] +".")
@@ -3188,7 +3188,7 @@ def main():
                     if moveAccuracy == True:
                         damage = int(fullDamageCalc(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, cpuPokemonOne, userPokemonOne))
                         userPokemonOneAdj[2] = userPokemonOneAdj[2] - damage
-                        moveEffectivenessPrint(cpuPokemonOne, userPokemonOne, cpuPokemonOneAdj, userPokemonOneAdj, moveChoice, False)
+                        moveEffectivenessPrint(cpuPokemonOne, userPokemonOne, cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, False)
                         cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False, damage)
                     else:
                         print(cpuPokemonOne[28] + " missed your " + userPokemonOne[1] +".")
@@ -3221,7 +3221,7 @@ def main():
                     if moveAccuracy == True:
                         damage = int(fullDamageCalc(cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, cpuPokemonOne, userPokemonOne))
                         userPokemonOneAdj[2] = userPokemonOneAdj[2] - damage
-                        moveEffectivenessPrint(cpuPokemonOne, userPokemonOne, cpuPokemonOneAdj, userPokemonOneAdj, moveChoice, False)
+                        moveEffectivenessPrint(cpuPokemonOne, userPokemonOne, cpuPokemonOneAdj, userPokemonOneAdj, cpuMove, False)
                         cpuSpecialAbilities(cpuMove, cpuPokemonOneAdj, False, damage)
                     else:
                         print(cpuPokemonOne[37] + " missed your " + userPokemonOne[1] +".")
